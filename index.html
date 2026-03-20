@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Podero Outreach Automation Dashboard — MVP</title>
+<style>
+  :root {
+    --bg: #0f0f13;
+    --card: #1a1a24;
+    --card-hover: #22222f;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent-light: #9d85fd;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --text: #e4e4eb;
+    --text-dim: #8888a0;
+    --text-muted: #5a5a72;
+    --purple-sheet: #a855f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  /* Header */
+  .header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header h1 span { color: var(--accent); }
+  .header .meta { font-size: 13px; color: var(--text-dim); }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-mvp { background: var(--accent); color: #fff; }
+  .badge-review { background: var(--yellow); color: #000; }
+  .badge-draft { background: var(--text-muted); color: #fff; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 32px; background: var(--card); }
+  .tab { padding: 14px 24px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-dim); border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: var(--text); background: var(--card-hover); }
+  .tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+  .tab .count { background: var(--border); color: var(--text-dim); padding: 1px 7px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
+  .tab.active .count { background: var(--accent); color: #fff; }
+
+  /* Content */
+  .content { padding: 24px 32px; }
+  .module { display: none; }
+  .module.active { display: block; }
+
+  /* Summary Cards */
+  .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .summary-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .summary-card .value { font-size: 28px; font-weight: 700; }
+  .summary-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Tables */
+  .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-header h3 { font-size: 15px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 16px; color: var(--text-dim); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: var(--card-hover); }
+
+  /* Priority indicators */
+  .priority-high { color: var(--red); }
+  .priority-medium { color: var(--yellow); }
+  .priority-low { color: var(--green); }
+
+  .urgency-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .urgency-critical { background: rgba(239,68,68,0.15); color: var(--red); }
+  .urgency-high { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .urgency-medium { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .urgency-low { background: rgba(34,197,94,0.15); color: var(--green); }
+
+  /* Owner tags */
+  .owner-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; background: rgba(124,92,252,0.12); color: var(--accent-light); }
+
+  /* Purple sheet indicator */
+  .ps-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .ps-yes { background: var(--purple-sheet); }
+  .ps-no { background: var(--text-muted); }
+
+  /* Outreach angle */
+  .angle { font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 300px; }
+
+  /* Map */
+  .map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .country-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+  .country-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .country-card .name { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .country-card .stats { display: flex; gap: 12px; font-size: 12px; color: var(--text-dim); }
+  .country-card .stat-val { font-weight: 600; color: var(--text); }
+  .whitespace-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 10px; overflow: hidden; }
+  .whitespace-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  select { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; cursor: pointer; }
+
+  /* Section headers */
+  .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title .icon { font-size: 18px; }
+
+  /* Info banner */
+  .info-banner { background: rgba(124,92,252,0.08); border: 1px solid rgba(124,92,252,0.2); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: var(--accent-light); display: flex; align-items: flex-start; gap: 10px; }
+  .info-banner .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Review button */
+  .review-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--accent); background: transparent; color: var(--accent-light); font-size: 11px; cursor: pointer; transition: all 0.15s; }
+  .review-btn:hover { background: var(--accent); color: #fff; }
+
+  .hubspot-link { color: var(--blue); text-decoration: none; font-size: 12px; }
+  .hubspot-link:hover { text-decoration: underline; }
+
+  /* Top 10 special */
+  .top10-card { background: linear-gradient(135deg, rgba(124,92,252,0.08), rgba(168,85,247,0.08)); border: 1px solid rgba(124,92,252,0.25); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .top10-card h3 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .top10-list { list-style: none; }
+  .top10-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(124,92,252,0.1); }
+  .top10-item:last-child { border-bottom: none; }
+  .top10-rank { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .top10-info { flex: 1; }
+  .top10-name { font-weight: 600; font-size: 14px; }
+  .top10-reason { font-size: 12px; color: var(--text-dim); }
+  .top10-owner { font-size: 11px; }
+
+  /* Expandable details */
+  details { margin-bottom: 8px; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--accent-light); padding: 4px 0; }
+  details .detail-content { padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
+
+  /* Pipeline Health Specific Styles */
+  .stage-badge { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+  .stage-badge-active { background: rgba(59,130,246,0.2); color: var(--blue); }
+  .stage-badge-closed { background: rgba(34,197,94,0.2); color: var(--green); }
+  .stage-badge-nurture { background: rgba(168,85,247,0.2); color: var(--purple-sheet); }
+  .stage-badge-disqualified { background: rgba(239,68,68,0.2); color: var(--red); }
+
+  /* KPI Cards — matching reference layout */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 20px 20px 24px; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 12px 0 0 12px; }
+  .kpi-card.kpi-purple::before { background: var(--accent); }
+  .kpi-card.kpi-green::before { background: var(--green); }
+  .kpi-card.kpi-blue::before { background: var(--blue); }
+  .kpi-card.kpi-red::before { background: var(--red); }
+  .kpi-card.kpi-orange::before { background: var(--orange); }
+  .kpi-card.kpi-yellow::before { background: var(--yellow); }
+  .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); margin-bottom: 8px; }
+  .kpi-value { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+  .funnel-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-stage-name { width: 160px; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+  .funnel-bar-container { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; margin: 0 16px; position: relative; }
+  .funnel-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: #fff; font-size: 11px; font-weight: 600; }
+  .funnel-stats { width: 140px; text-align: right; flex-shrink: 0; }
+  .funnel-count { font-weight: 600; font-size: 13px; }
+  .funnel-amount { font-size: 12px; color: var(--text-dim); }
+
+  .health-score { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px; }
+  .health-circle { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; border: 3px solid; }
+  .health-grade-a { border-color: var(--green); color: var(--green); }
+  .health-grade-b { border-color: var(--yellow); color: var(--yellow); }
+  .health-grade-c { border-color: var(--orange); color: var(--orange); }
+  .health-details { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
+
+  /* Footer */
+  .footer { padding: 20px 32px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1><span>⚡</span> Podero Outreach Dashboard <span class="badge badge-mvp">MVP v1</span></h1>
+    <div class="meta">HubSpot + Notion · Last synced: March 20, 2026 · Manual review required before any outreach</div>
+  </div>
+  <div style="text-align:right">
+    <div class="meta">Nurture deals only · No auto-send</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pipeline')">📊 Pipeline Health</div>
+  <div class="tab" onclick="switchTab('nurture')">🔄 Nurture Follow-ups <span class="count" id="nurture-count">0</span></div>
+  <div class="tab" onclick="switchTab('triggers')">⚡ Trigger Outreach <span class="count" id="triggers-count">0</span></div>
+  <div class="tab" onclick="switchTab('coverage')">🌍 EU Market Coverage <span class="count" id="coverage-count">0</span></div>
+  <div class="tab" onclick="switchTab('architecture')">🏗 Architecture & Roadmap</div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════ MODULE 0: PIPELINE HEALTH ═══════════════ -->
+<div class="module active" id="mod-pipeline">
+  <div class="info-banner">
+    <span class="icon">📊</span>
+    <div><strong>Pipeline Health Dashboard</strong> provides a real-time view of sales pipeline performance, stage distribution, recent momentum, and alerts for deals requiring attention.</div>
+  </div>
+
+  <!-- KPI Cards — Row 1 -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-label">Total Pipeline (Snapshot)</div>
+      <div class="kpi-value">€3.470.000</div>
+      <div class="kpi-sub">64 active deals · current</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-label">New This Week</div>
+      <div class="kpi-value">None</div>
+      <div class="kpi-sub">0 deals</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-label">New Qualified This Week</div>
+      <div class="kpi-value">None</div>
+      <div class="kpi-sub">0 deals · excl. Unqualified</div>
+    </div>
+  </div>
+
+  <!-- KPI Cards — Row 2 -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-red">
+      <div class="kpi-label">Exits This Week</div>
+      <div class="kpi-value">1</div>
+      <div class="kpi-sub">A2A — Closed Won (€118.000)</div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-label">New Pipeline Q1 2026 (to date)</div>
+      <div class="kpi-value">€676.000</div>
+      <div class="kpi-sub">13 deals · all stages</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-label">New Qualified Pipeline Q1 2026</div>
+      <div class="kpi-value">€520.000</div>
+      <div class="kpi-sub">10 deals · excl. Unqualified</div>
+    </div>
+  </div>
+
+  <!-- KPI Cards — Row 3 -->
+  <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="kpi-card kpi-red">
+      <div class="kpi-label">Top 120 Overall</div>
+      <div class="kpi-value">24/119</div>
+      <div class="kpi-sub">20.2% · target ≥30%</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-label">Q1 Closed Won</div>
+      <div class="kpi-value">€165.000</div>
+      <div class="kpi-sub">4 deals · IKB, EKZ, Iren, A2A</div>
+    </div>
+    <div class="kpi-card kpi-yellow">
+      <div class="kpi-label">Stalled Deals</div>
+      <div class="kpi-value">34</div>
+      <div class="kpi-sub">12.2% of pipeline · needs attention</div>
+    </div>
+  </div>
+
+  <!-- Pipeline Funnel Section -->
+  <div class="section-title"><span class="icon">📈</span> Pipeline Funnel by Stage</div>
+  <div class="table-container" style="margin-bottom: 24px;">
+    <div class="table-header">
+      <h3>Stage Breakdown</h3>
+      <div class="meta">All stages with active deals</div>
+    </div>
+    <div style="padding: 20px;">
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Unqualified Deal</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:20%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">25</div><div class="funnel-amount">€1,202,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Qualified Deal</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:17%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">21</div><div class="funnel-amount">€1,095,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Pending Approval</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:7%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">9</div><div class="funnel-amount">€722,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Biz & Tech Eval</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:3%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">4</div><div class="funnel-amount">€278,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Commercial Review</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:2%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">3</div><div class="funnel-amount">€161,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Committed</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:2%; background: rgba(59,130,246,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">2</div><div class="funnel-amount">€12,000</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Closed Won</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:17%; background: rgba(34,197,94,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">25</div><div class="funnel-amount">€702,120</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Nurture</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:100%; background: rgba(168,85,247,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">151</div><div class="funnel-amount">€9,141,800</div></div>
+      </div>
+      <div class="funnel-row">
+        <div class="funnel-stage-name">Disqualified</div>
+        <div class="funnel-bar-container"><div class="funnel-bar" style="width:25%; background: rgba(239,68,68,0.6)"></div></div>
+        <div class="funnel-stats"><div class="funnel-count">38</div><div class="funnel-amount">€1,796,000</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Stage Changes Section -->
+  <div class="section-title"><span class="icon">🔄</span> Recent Stage Changes (Last 14 Days)</div>
+  <div class="table-container">
+    <div class="table-header">
+      <h3>Deals That Moved Stages</h3>
+      <div class="meta"><span id="recent-moves-count">30</span> deals shown</div>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Deal Name</th>
+          <th>Moved To</th>
+          <th>Date</th>
+          <th>Days Ago</th>
+          <th>Deal Value</th>
+          <th>Owner</th>
+          <th>Stalled?</th>
+        </tr>
+      </thead>
+      <tbody id="recent-moves-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Stalled Deals Section -->
+  <div class="section-title"><span class="icon">⚠️</span> Stalled Deals Alert (34 Total)</div>
+  <div class="table-container">
+    <div class="table-header">
+      <h3>Deals Requiring Attention</h3>
+      <div class="meta">No movement in 21+ days</div>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Deal Name</th>
+          <th>Stage</th>
+          <th>Owner</th>
+          <th>HubSpot Link</th>
+        </tr>
+      </thead>
+      <tbody id="stalled-deals-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Pipeline Health Score -->
+  <div class="section-title"><span class="icon">💚</span> Pipeline Health Score</div>
+  <div class="health-score">
+    <div class="health-circle health-grade-b">B</div>
+    <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px">Good, with caution zones</div>
+    <div class="health-details">
+      <p style="margin-bottom:8px"><strong>Stalled Ratio:</strong> 12.2% (34 of 278 deals) — Yellow zone, investigate</p>
+      <p style="margin-bottom:8px"><strong>Stage Distribution:</strong> Heavy concentration in Nurture (34.5%) — Flag for qualification review</p>
+      <p style="margin-bottom:8px"><strong>Recent Momentum:</strong> 30 moves in 14 days — Good activity</p>
+      <p><strong>Closed Won Momentum:</strong> 2 recent wins — Stable, needs acceleration</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODULE 1: NURTURE FOLLOW-UPS ═══════════════ -->
+<div class="module" id="mod-nurture">
+  <div class="info-banner">
+    <span class="icon">ℹ️</span>
+    <div>All suggestions are <strong>draft only</strong>. Nothing is sent automatically. Each follow-up must be reviewed and approved by the responsible sales person before any outreach happens.</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="label">Total Nurture Deals</div>
+      <div class="value" id="total-nurture">149</div>
+      <div class="sub">Across all pipelines</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Overdue (>90 days)</div>
+      <div class="value priority-high" id="overdue-count">0</div>
+      <div class="sub">No contact in 3+ months</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Due Soon (30–90 days)</div>
+      <div class="value priority-medium" id="due-soon-count">0</div>
+      <div class="sub">Follow-up recommended</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Recently Contacted</div>
+      <div class="value priority-low" id="recent-count">0</div>
+      <div class="sub">Last 30 days</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Never Contacted</div>
+      <div class="value" style="color:var(--text-muted)" id="never-count">0</div>
+      <div class="sub">No activity logged</div>
+    </div>
+  </div>
+
+  <div class="filters" style="margin-bottom:16px">
+    <span style="font-size:12px;color:var(--text-dim)">Filter by owner:</span>
+    <select id="owner-filter" onchange="filterNurture()">
+      <option value="all">All Owners</option>
+    </select>
+    <span style="font-size:12px;color:var(--text-dim);margin-left:8px">Priority:</span>
+    <button class="filter-btn active" onclick="setUrgency(this,'all')">All</button>
+    <button class="filter-btn" onclick="setUrgency(this,'critical')">🔴 Critical</button>
+    <button class="filter-btn" onclick="setUrgency(this,'high')">🟠 High</button>
+    <button class="filter-btn" onclick="setUrgency(this,'medium')">🟡 Medium</button>
+    <button class="filter-btn" onclick="setUrgency(this,'low')">🟢 Recent</button>
+    <button class="filter-btn" onclick="setUrgency(this,'never')">⚫ Never</button>
+  </div>
+
+  <div class="table-container">
+    <div class="table-header">
+      <h3>📋 Follow-up Suggestions Queue</h3>
+      <div class="meta"><span id="showing-count">0</span> deals shown</div>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>Company / Deal</th>
+          <th>Owner</th>
+          <th>Deal Value</th>
+          <th>Last Contact</th>
+          <th>Days Silent</th>
+          <th>Purple Sheet</th>
+          <th>Suggested Action</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="nurture-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODULE 2: TRIGGER OUTREACH ═══════════════ -->
+<div class="module" id="mod-triggers">
+  <div class="info-banner">
+    <span class="icon">⚡</span>
+    <div><strong>Trigger-based outreach</strong> uses external signals to identify timely outreach moments. In the full version, this will pull from LinkedIn, news, regulation, and company activity. For MVP, triggers are generated from CRM activity patterns and deal data.</div>
+  </div>
+
+  <div class="top10-card">
+    <h3>🏆 Top 10 Outreach Targets of the Week</h3>
+    <ol class="top10-list" id="top10-list"></ol>
+  </div>
+
+  <div class="section-title"><span class="icon">📡</span> All Trigger Signals This Week</div>
+
+  <div class="table-container">
+    <div class="table-header">
+      <h3>Detected Triggers</h3>
+      <div class="filters">
+        <select id="trigger-type-filter" onchange="filterTriggers()">
+          <option value="all">All Trigger Types</option>
+          <option value="stale">Stale Deal Re-engagement</option>
+          <option value="close_passed">Closed Date Passed</option>
+          <option value="high_value">High Value Inactive</option>
+          <option value="multi_deal">Multi-deal Company</option>
+          <option value="recent_activity">Recent CRM Activity</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Trigger</th>
+          <th>Why It Matters</th>
+          <th>Suggested Angle</th>
+          <th>Owner</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="triggers-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODULE 3: EU MARKET COVERAGE ═══════════════ -->
+<div class="module" id="mod-coverage">
+  <div class="info-banner">
+    <span class="icon">🌍</span>
+    <div><strong>European Market Coverage</strong> shows all Top 120 utilities by country. Identifies whitespace (never contacted) to help prioritize systematic outreach across Europe.</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="label">Top 120 Utilities Tracked</div>
+      <div class="value">119</div>
+      <div class="sub">Across 31 European countries</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Never Contacted</div>
+      <div class="value priority-high" id="whitespace-count">0</div>
+      <div class="sub">Whitespace opportunities</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Countries Covered</div>
+      <div class="value">31</div>
+      <div class="sub">EU + neighboring</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Avg. Contacts per Utility</div>
+      <div class="value" id="avg-contacts">—</div>
+      <div class="sub">Across all tracked utilities</div>
+    </div>
+  </div>
+
+  <div class="section-title"><span class="icon">🗺</span> Coverage by Country</div>
+  <div class="map-grid" id="country-grid"></div>
+
+  <div class="section-title"><span class="icon">⚪</span> Whitespace: Never Contacted Utilities</div>
+  <div class="table-container">
+    <div class="table-header">
+      <h3>Untouched Top 120 Utilities</h3>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Utility</th>
+          <th>Country</th>
+          <th>Industry</th>
+          <th>Current Owner</th>
+          <th>In HubSpot Since</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="whitespace-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODULE 4: ARCHITECTURE ═══════════════ -->
+<div class="module" id="mod-architecture">
+  <div class="info-banner">
+    <span class="icon">🏗</span>
+    <div><strong>MVP Architecture & Roadmap</strong>. This section documents the data model, workflows, and expansion plan for the Outreach Automation Dashboard.</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+    <div class="table-container" style="margin-bottom:0">
+      <div class="table-header"><h3>📐 Data Model</h3></div>
+      <div style="padding:20px;font-size:13px;color:var(--text-dim)">
+        <p style="margin-bottom:12px"><strong style="color:var(--text)">Primary Sources:</strong></p>
+        <p style="margin-bottom:6px">• <strong>HubSpot Deals</strong> — Pipeline stage "Nurture" (149 deals)</p>
+        <p style="margin-bottom:6px">• <strong>HubSpot Companies</strong> — Top 120 utilities (119 companies)</p>
+        <p style="margin-bottom:6px">• <strong>HubSpot Owners</strong> — Sales team assignment</p>
+        <p style="margin-bottom:12px">• <strong>Notion Purple Sheets</strong> — Deep customer context per utility</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--text)">Key Fields Used:</strong></p>
+        <p style="margin-bottom:6px">• Deal: name, stage, owner, amount, last contacted, close date</p>
+        <p style="margin-bottom:6px">• Company: name, country, top_120, contacted count, last activity, domain</p>
+        <p style="margin-bottom:6px">• Purple Sheet: status, country, contacts, priority, solution proposed</p>
+      </div>
+    </div>
+
+    <div class="table-container" style="margin-bottom:0">
+      <div class="table-header"><h3>⚙️ Workflow Logic</h3></div>
+      <div style="padding:20px;font-size:13px;color:var(--text-dim)">
+        <p style="margin-bottom:12px"><strong style="color:var(--text)">Module 1 — Nurture Follow-up:</strong></p>
+        <p style="margin-bottom:6px">• Priority = f(days_silent, deal_value, has_purple_sheet)</p>
+        <p style="margin-bottom:6px">• Critical: >180 days silent OR never contacted + high value</p>
+        <p style="margin-bottom:6px">• High: 90–180 days silent</p>
+        <p style="margin-bottom:12px">• Medium: 30–90 days · Low: <30 days</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--text)">Module 2 — Triggers:</strong></p>
+        <p style="margin-bottom:6px">• Stale re-engagement: High-value deals dormant >120 days</p>
+        <p style="margin-bottom:6px">• Close date passed: Deals past expected close</p>
+        <p style="margin-bottom:12px">• Multi-deal: Companies with multiple nurture deals</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--text)">Module 3 — Coverage:</strong></p>
+        <p style="margin-bottom:6px">• Whitespace = top_120 + num_contacted = 0</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div class="table-header"><h3>🗓 Expansion Roadmap</h3></div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Phase</th><th>What</th><th>Data Sources</th><th>Automation Level</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-mvp">MVP — Now</span></td><td>Dashboard with 3 modules, manual review, static data snapshot</td><td>HubSpot CRM + Notion Purple Sheets</td><td>Manual refresh, suggestions only</td></tr>
+        <tr><td><span class="badge badge-review">Phase 2</span></td><td>Automated weekly data sync, AI message drafts, Slack notifications</td><td>+ LinkedIn (company updates), News API</td><td>Weekly auto-refresh, draft messages</td></tr>
+        <tr><td><span class="badge badge-draft">Phase 3</span></td><td>Full trigger engine, regulation monitoring, competitive intelligence</td><td>+ EU regulation feeds, competitor tracking</td><td>Real-time triggers, review queue</td></tr>
+        <tr><td><span class="badge badge-draft">Phase 4</span></td><td>Outreach performance tracking, A/B testing angles, response scoring</td><td>+ Email engagement data, meeting outcomes</td><td>Learning system, optimized suggestions</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  Podero Outreach Dashboard MVP · Data from HubSpot + Notion · Built March 12, 2026 · All outreach suggestions require manual review
+</div>
+
+<script>
+// ═══════════════ DATA ═══════════════
+const OWNERS = {
+  "29205625": "Antonella Annoscia",
+  "29209097": "Laurent Gendre",
+  "29248661": "Tania Barr",
+  "29442114": "Sasu Olli",
+  "29454756": "Dasha Vishniakova",
+  "29840372": "Mohammad Gawhari",
+  "30059932": "Caterina Rudari",
+  "30370560": "Marketing Team",
+  "30847617": "Rachael Curzons",
+  "31026513": "Stella Kaltenecker",
+  "32021080": "Christian Kröncke",
+  "60184130": "Sol Quantin",
+  "77084765": "Lasse Hausser",
+  "78191199": "Nicolas Reichl",
+  "79805658": "Amelie Schulze",
+  "2099248808": "Benjamin Dobberke",
+  "1848677060": "Chris Bernkopf",
+  "1281876607": "Rufus Walk",
+  "1848699851": "Louis Jabbour"
+};
+
+const HUBSPOT_URL = "https://app-eu1.hubspot.com";
+
+// Purple sheets known in Notion for these companies
+const PURPLE_SHEETS = {
+  "E.ON UK": "https://www.notion.so/5794a4d6d52249e5985da9e51e6da2ad",
+  "E.ON Sweden": "https://www.notion.so/437756c1c95b4fdf962a517d3c8cc1d0",
+  "E.ON Hungaria": "https://www.notion.so/2843ad5132ff803bb183d106d2cb1254",
+  "E.ON Global": "https://www.notion.so/27e3ad5132ff80f4a14ce00ee70acc5b",
+};
+
+// Recent stage moves data
+const RECENT_MOVES = [
+  {id:"22967998416",name:"A2A - New Deal w Sasu",stage:"Closed Won",entered:"2026-03-18",daysAgo:2,amount:118000,owner:"29205625",stalled:false},
+  {id:"484493109476",name:"Energy Market Solutions - New Deal",stage:"Pending Approval",entered:"2026-03-16",daysAgo:4,amount:72000,owner:"2099248808",stalled:false},
+  {id:"475469749452",name:"Kelag - Smart Charging",stage:"Biz & Tech Eval",entered:"2026-03-16",daysAgo:4,amount:24000,owner:"2099248808",stalled:false},
+  {id:"281712193738",name:"Energie AG Ausschreibung",stage:"Biz & Tech Eval",entered:"2026-03-16",daysAgo:4,amount:72000,owner:"2099248808",stalled:false},
+  {id:"269858838742",name:"Wien Energie - New Deal",stage:"Pending Approval",entered:"2026-03-16",daysAgo:4,amount:72000,owner:"2099248808",stalled:false},
+  {id:"275562952931",name:"Vandebron",stage:"Nurture",entered:"2026-03-16",daysAgo:4,amount:72000,owner:"2099248808",stalled:false},
+  {id:"46298737899",name:"E.ON Italy - Soft Launch w Ben",stage:"Pending Approval",entered:"2026-03-12",daysAgo:8,amount:118000,owner:"29205625",stalled:true},
+  {id:"493050800358",name:"Zählerfreunde",stage:"Pending Approval",entered:"2026-03-12",daysAgo:8,amount:40000,owner:"78191199",stalled:false},
+  {id:"336307831012",name:"Protergia - New Deal",stage:"Nurture",entered:"2026-03-12",daysAgo:8,amount:72000,owner:"29205625",stalled:false},
+  {id:"31873410294",name:"Edison - New Deal",stage:"Nurture",entered:"2026-03-11",daysAgo:9,amount:72000,owner:"29205625",stalled:false},
+  {id:"493050115271",name:"Dolomiti Energia - New Deal",stage:"Unqualified Deal",entered:"2026-03-11",daysAgo:9,amount:72000,owner:"29205625",stalled:false},
+  {id:"493049397461",name:"Monheimer Elektrizitäts- und Gasversorgung GmbH",stage:"Qualified Deal",entered:"2026-03-11",daysAgo:9,amount:72000,owner:"78191199",stalled:false},
+  {id:"488029866225",name:"AGSM (Magis) - New Deal",stage:"Commercial Review",entered:"2026-03-11",daysAgo:9,amount:62000,owner:"29205625",stalled:false},
+  {id:"236085375184",name:"Italia Power Spa - New Deal",stage:"Nurture",entered:"2026-03-11",daysAgo:9,amount:36000,owner:"29205625",stalled:false},
+  {id:"333920118981",name:"MET Energia Italia - New Deal",stage:"Nurture",entered:"2026-03-11",daysAgo:9,amount:0,owner:"29205625",stalled:false},
+  {id:"156851202286",name:"ENERCOM SRL - New Deal",stage:"Nurture",entered:"2026-03-11",daysAgo:9,amount:35000,owner:"29205625",stalled:false},
+  {id:"487499546852",name:"SW Westmünsterland - endios",stage:"Qualified Deal",entered:"2026-03-06",daysAgo:14,amount:12000,owner:"78191199",stalled:false},
+  {id:"222098391262",name:"AGSM AIM - New Deal",stage:"Nurture",entered:"2026-03-06",daysAgo:14,amount:36000,owner:"29205625",stalled:false},
+  {id:"488361567476",name:"EVN - New Deal",stage:"Unqualified Deal",entered:"2026-03-05",daysAgo:15,amount:72000,owner:"2099248808",stalled:false},
+  {id:"487964135626",name:"SW Ratingen - endios",stage:"Unqualified Deal",entered:"2026-03-05",daysAgo:15,amount:12000,owner:"78191199",stalled:false},
+  {id:"314791886028",name:"Enervie – Südwestfalen Energie und Wasser AG",stage:"Qualified Deal",entered:"2026-03-05",daysAgo:15,amount:12000,owner:"2099248808",stalled:false},
+  {id:"156852188379",name:"Gruppo Iren - Pilot",stage:"Closed Won",entered:"2026-03-05",daysAgo:15,amount:0,owner:"29205625",stalled:false},
+  {id:"487129973955",name:"Endios - Stadtwerke Duisburg",stage:"Committed",entered:"2026-03-04",daysAgo:16,amount:12000,owner:"2099248808",stalled:false},
+  {id:"207849660645",name:"E.ON Deutschland GmbH",stage:"Nurture",entered:"2026-03-02",daysAgo:18,amount:118000,owner:"2099248808",stalled:false},
+  {id:"20745723340",name:"Engie Belgium - New Deal",stage:"Nurture",entered:"2026-03-02",daysAgo:18,amount:36000,owner:"2099248808",stalled:false},
+  {id:"339253188832",name:"EWE - new deal",stage:"Nurture",entered:"2026-03-02",daysAgo:18,amount:72000,owner:"2099248808",stalled:false},
+  {id:"479648112886",name:"Ignitis Latvija - New Deal",stage:"Qualified Deal",entered:"2026-02-27",daysAgo:21,amount:82000,owner:"29442114",stalled:false},
+  {id:"474609141975",name:"ScottishPower - New Deal",stage:"Qualified Deal",entered:"2026-02-27",daysAgo:21,amount:72000,owner:"2099248808",stalled:false},
+  {id:"475463989439",name:"Eneco Group - New Deal",stage:"Qualified Deal",entered:"2026-02-27",daysAgo:21,amount:72000,owner:"2099248808",stalled:false},
+  {id:"258808624340",name:"EON Hrvatska - New Deal",stage:"Nurture",entered:"2026-02-27",daysAgo:21,amount:82000,owner:"29442114",stalled:false},
+];
+
+// Stalled deals data
+const STALLED_DEALS = [
+  {id:"239593845991",name:"Illwerke VKW",stage:"Unqualified Deal",owner:"2099248808"},
+  {id:"339992504557",name:"PPC Greece - New Deal",stage:"Pending Approval",owner:"29442114"},
+  {id:"321445361904",name:"E.ON Hungaria - 6 months pilot",stage:"Committed",owner:"2099248808"},
+  {id:"46298737899",name:"E.ON Italy - Soft Launch w Ben",stage:"Pending Approval",owner:"29205625"},
+  {id:"314791886063",name:"Zwickauer Energieversorgung (Endios)",stage:"Unqualified Deal",owner:"78191199"},
+  {id:"156852184271",name:"Duferco Energia - New Deal",stage:"Unqualified Deal",owner:"29205625"},
+  {id:"328141849844",name:"Bluenergy Group S.p.A. - New Deal",stage:"Unqualified Deal",owner:"29205625"},
+  {id:"314791886072",name:"BEW Bocholter (Endios)",stage:"Qualified Deal",owner:"78191199"},
+  {id:"309211738351",name:"Orlen S.A. - New Deal",stage:"Unqualified Deal",owner:"29442114"},
+  {id:"338158986460",name:"Stadtwerke Amberg (Endios)",stage:"Qualified Deal",owner:"2099248808"},
+  {id:"304509054152",name:"Cells4.Energy",stage:"Unqualified Deal",owner:"2099248808"},
+  {id:"316495500499",name:"Stadtwerke Norderstedt (Endios)",stage:"Qualified Deal",owner:"78191199"},
+  {id:"357230315746",name:"naturstrom AG",stage:"Pending Approval",owner:"2099248808"},
+  {id:"406331375802",name:"Salzburg AG 2026",stage:"Qualified Deal",owner:"29442114"},
+  {id:"297573998841",name:"Opinum Enovos RFQ",stage:"Pending Approval",owner:"2099248808"},
+];
+
+const NURTURE_DEALS = [
+  {id:"406330651841",name:"OVO - New Deal",owner:"29442114",amount:82000,lastContact:"2025-12-11",modified:"2026-03-02"},
+  {id:"404308885744",name:"Helen - New Deal",owner:"29442114",amount:72000,lastContact:"2026-01-21",modified:"2026-02-19"},
+  {id:"386616457428",name:"Illwerke vkw",owner:"2099248808",amount:72000,lastContact:null,modified:"2026-03-04"},
+  {id:"371268278497",name:"GEN-I d.o.o. - New Deal",owner:"29442114",amount:72000,lastContact:"2025-10-29",modified:"2026-02-02"},
+  {id:"339253188832",name:"EWE - new deal",owner:"2099248808",amount:72000,lastContact:null,modified:"2026-03-02"},
+  {id:"337966133866",name:"Vattenfall Germany - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-10-22",modified:"2026-01-20"},
+  {id:"337966066685",name:"ENGIE Netherlands Curtailment",owner:"2099248808",amount:72000,lastContact:"2025-10-22",modified:"2026-02-20"},
+  {id:"335610770025",name:"Mega - New Deal",owner:"2099248808",amount:72000,lastContact:"2026-02-17",modified:"2026-02-18"},
+  {id:"333327291199",name:"Eesti Energia RFP",owner:"2099248808",amount:72000,lastContact:"2025-12-09",modified:"2026-02-23"},
+  {id:"333096625028",name:"Eesti Energia - 5 months pilot",owner:"2099248808",amount:0,lastContact:"2025-12-09",modified:"2026-02-23"},
+  {id:"325618968780",name:"MET Energia Italia - New Deal",owner:"29205625",amount:0,lastContact:null,modified:"2026-03-11"},
+  {id:"321073082067",name:"Stadtwerke Strom Plauen (Endios)",owner:"2099248808",amount:12000,lastContact:null,modified:"2025-10-31"},
+  {id:"320103704461",name:"E.ON CZ",owner:"29442114",amount:82000,lastContact:"2025-11-12",modified:"2026-02-17"},
+  {id:"318746965825",name:"Enixi",owner:"2099248808",amount:0,lastContact:null,modified:"2026-02-20"},
+  {id:"307665455803",name:"ENGIE Polska - New Deal",owner:"29442114",amount:82000,lastContact:"2025-09-19",modified:"2025-10-07"},
+  {id:"302539285832",name:"ewz - New Deal",owner:"2099248808",amount:82000,lastContact:"2025-12-09",modified:"2026-01-29"},
+  {id:"301605505900",name:"AIL SA - New Deal",owner:"2099248808",amount:82000,lastContact:"2026-02-19",modified:"2026-02-19"},
+  {id:"298291989891",name:"Endios - Stadtwerke Lübbecke",owner:"78191199",amount:12000,lastContact:null,modified:"2025-10-03"},
+  {id:"296805419399",name:"Sankt Galler Stadtwerke",owner:"2099248808",amount:82000,lastContact:"2025-12-11",modified:"2026-02-04"},
+  {id:"294805068750",name:"Oulun Energia (DSO) to Oomi",owner:"29442114",amount:82000,lastContact:"2025-10-08",modified:"2025-10-24"},
+  {id:"293744327284",name:"Wien Energie EV steering",owner:"2099248808",amount:72000,lastContact:"2025-09-30",modified:"2026-02-10"},
+  {id:"292613932403",name:"Electrica Furnizare SA",owner:"29442114",amount:82000,lastContact:"2026-01-19",modified:"2026-01-29"},
+  {id:"289997858419",name:"Pražská plynárenská",owner:"29442114",amount:48000,lastContact:"2025-11-13",modified:"2025-11-13"},
+  {id:"282654549671",name:"Illumia Power - New Deal",owner:"29205625",amount:80000,lastContact:"2025-10-07",modified:"2025-12-29"},
+  {id:"282651063889",name:"Eni Plenitude - New Deal",owner:"29205625",amount:100000,lastContact:null,modified:"2026-01-20"},
+  {id:"282650919752",name:"Sorgenia - New Deal",owner:"29205625",amount:82000,lastContact:null,modified:"2025-12-29"},
+  {id:"282316155116",name:"EON Hrvatska - New Deal",owner:"29442114",amount:82000,lastContact:"2026-02-06",modified:"2026-03-04"},
+  {id:"282316152987",name:"Engie France",owner:"29442114",amount:82800,lastContact:"2025-08-25",modified:"2026-01-20"},
+  {id:"280929834810",name:"Manta Ray Energy UK / E.ON",owner:"29442114",amount:82000,lastContact:"2026-01-07",modified:"2026-02-04"},
+  {id:"278875779627",name:"E.ON Sverige - PV & Batteries",owner:"29442114",amount:0,lastContact:"2025-10-27",modified:"2026-01-20"},
+  {id:"274652440879",name:"Ignitis - Baltics",owner:"29442114",amount:82000,lastContact:"2025-10-08",modified:"2026-01-20"},
+  {id:"274652440805",name:"ESB/PILOT/24k",owner:"29442114",amount:0,lastContact:"2025-07-25",modified:"2026-02-16"},
+  {id:"273296397927",name:"Italia Power Spa - New Deal",owner:"29205625",amount:36000,lastContact:null,modified:"2026-03-11"},
+  {id:"272700174729",name:"AGSM AIM - New Deal",owner:"29205625",amount:36000,lastContact:"2026-03-01",modified:"2026-03-06"},
+  {id:"268498478399",name:"E.ON Deutschland GmbH",owner:"2099248808",amount:118000,lastContact:"2026-02-23",modified:"2026-03-11"},
+  {id:"268296575327",name:"EWR AG - New Deal",owner:"2099248808",amount:36000,lastContact:null,modified:"2026-02-16"},
+  {id:"267402963393",name:"AXPO Italy",owner:"29205625",amount:40000,lastContact:"2025-09-08",modified:"2026-02-18"},
+  {id:"265003259757",name:"E.ON Polska - New Deal",owner:"2099248808",amount:36000,lastContact:"2025-06-05",modified:"2025-10-31"},
+  {id:"264009116668",name:"EWE AG - New Deal",owner:"2099248808",amount:36000,lastContact:null,modified:"2026-02-16"},
+  {id:"261979965003",name:"Hera S.p.A. - New Deal",owner:"29205625",amount:36000,lastContact:null,modified:"2026-01-20"},
+  {id:"261979965004",name:"Alperia - New Deal",owner:"29205625",amount:36000,lastContact:null,modified:"2025-07-11"},
+  {id:"257867403927",name:"Stadtwerke Bochum GmbH",owner:"2099248808",amount:36000,lastContact:"2025-03-25",modified:"2025-11-26"},
+  {id:"253866076000",name:"ENERCOM SRL - New Deal",owner:"29205625",amount:35000,lastContact:"2026-02-19",modified:"2026-03-11"},
+  {id:"246900020155",name:"Enercity Trading Deal",owner:"2099248808",amount:20000,lastContact:"2025-02-25",modified:"2026-01-20"},
+  {id:"246899925925",name:"SWK Energie GmbH - New Deal",owner:"2099248808",amount:72000,lastContact:null,modified:"2025-11-27"},
+  {id:"245558571025",name:"Luminus - New Deal",owner:"2099248808",amount:36000,lastContact:null,modified:"2026-01-20"},
+  {id:"241987760001",name:"United Gas & Power",owner:"29442114",amount:36000,lastContact:"2025-06-27",modified:"2025-08-12"},
+  {id:"230782779866",name:"Uniper Germany - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-03-11",modified:"2025-10-09"},
+  {id:"225992654303",name:"Enel - New Deal",owner:"29205625",amount:100000,lastContact:"2025-07-28",modified:"2026-02-03"},
+  {id:"225659267282",name:"EDP Energias de Portugal",owner:"29442114",amount:0,lastContact:"2025-06-04",modified:"2026-02-04"},
+  {id:"216927270413",name:"Edison - New Deal",owner:"29205625",amount:72000,lastContact:"2026-02-11",modified:"2026-03-11"},
+  {id:"214990456802",name:"PPC - New Deal",owner:"2099248808",amount:72000,lastContact:null,modified:"2026-01-20"},
+  {id:"212849834500",name:"Utilita Energy - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-06-10",modified:"2026-02-05"},
+  {id:"208929244735",name:"EDF Energy (UK) - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-06-05",modified:"2026-01-20"},
+  {id:"207489543291",name:"ČEZ Group - New Deal",owner:"2099248808",amount:72000,lastContact:"2026-01-07",modified:"2026-02-20"},
+  {id:"203729485082",name:"E.ON Next - New Deal from FOU",owner:"2099248808",amount:72000,lastContact:"2024-11-26",modified:"2026-02-05"},
+  {id:"200489476810",name:"Romande Energie",owner:"1848677060",amount:72000,lastContact:"2024-12-16",modified:"2026-02-05"},
+  {id:"198756782316",name:"EKZ - New Deal",owner:"2099248808",amount:0,lastContact:"2024-12-11",modified:"2026-02-26"},
+  {id:"196578963222",name:"Engie Belgium - New Deal",owner:"2099248808",amount:36000,lastContact:"2026-02-25",modified:"2026-03-02"},
+  {id:"192675341005",name:"Kelag - New Deal",owner:"1848677060",amount:72000,lastContact:"2026-02-26",modified:"2026-03-02"},
+  {id:"188943552005",name:"VERBUND Energy4Business",owner:"2099248808",amount:72000,lastContact:"2024-11-19",modified:"2026-03-03"},
+  {id:"184321900022",name:"MVV - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-02-12",modified:"2026-02-05"},
+  {id:"180765432198",name:"Thüga - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-10-16",modified:"2026-02-05"},
+  {id:"175432198765",name:"PFALZWERKE AG - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-11-18",modified:"2026-02-06"},
+  {id:"170987654321",name:"Enercity - Smart Living",owner:"2099248808",amount:72000,lastContact:"2024-10-28",modified:"2026-02-04"},
+  {id:"165432100987",name:"LichtBlick - b2c Value Stream",owner:"2099248808",amount:72000,lastContact:"2025-06-05",modified:"2026-02-05"},
+  {id:"160876543210",name:"Stadtwerke Düsseldorf",owner:"2099248808",amount:72000,lastContact:"2024-08-06",modified:"2026-02-04"},
+  {id:"155321098765",name:"Verbund - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-04-23",modified:"2026-03-03"},
+  {id:"150765432109",name:"eprimo GmbH - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-08-19",modified:"2026-03-03"},
+  {id:"145210987654",name:"Mainova AG - Podero Instant",owner:"2099248808",amount:36000,lastContact:"2025-02-11",modified:"2026-01-20"},
+  {id:"140654321098",name:"Enercity - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-09-11",modified:"2026-01-20"},
+  {id:"135098765432",name:"Burgenland Energie - New Deal",owner:"1848677060",amount:72000,lastContact:"2024-11-07",modified:"2026-03-04"},
+  {id:"130543210987",name:"rabot.charge - New Deal",owner:"1848677060",amount:72000,lastContact:"2024-03-18",modified:"2026-03-02"},
+  {id:"125987654321",name:"Göteborg Energi - New Deal",owner:"2099248808",amount:72000,lastContact:"2024-09-11",modified:"2026-02-04"},
+  {id:"120432198765",name:"Kraftringen - Tender",owner:"2099248808",amount:72000,lastContact:"2024-12-16",modified:"2025-11-05"},
+  {id:"115876543210",name:"Öresundskraft AB - New Deal",owner:"2099248808",amount:72000,lastContact:"2025-06-05",modified:"2026-02-05"},
+];
+
+const TOP120_UTILITIES = [
+  {id:"267411690693",name:"ZeniΘ",country:"Greece",industry:"OIL_ENERGY",contacted:22,lastContact:"2026-02-05",owner:"29442114",domain:"zenith.gr"},
+  {id:"261328509169",name:"GEN-I d.o.o.",country:"Slovenia",industry:"OIL_ENERGY",contacted:13,lastContact:"2025-12-11",owner:"29442114",domain:"gen-i.si"},
+  {id:"258849719487",name:"HS Orka",country:"Iceland",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"www.hsorka.is"},
+  {id:"258850429117",name:"MVM Zrt",country:"Hungary",industry:"OIL_ENERGY",contacted:10,lastContact:"2026-03-12",owner:"29840372",domain:"mvm.hu"},
+  {id:"258850426086",name:"Vattenfall Netherlands",country:"Netherlands",industry:"OIL_ENERGY",contacted:18,lastContact:"2026-02-12",owner:"29442114",domain:"vattenfall.nl"},
+  {id:"258849719482",name:"Axpo Group",country:"Switzerland",industry:"OIL_ENERGY",contacted:18,lastContact:"2025-09-08",owner:"29442114",domain:"axpo.com"},
+  {id:"258869316556",name:"Eesti Energia",country:"Estonia",industry:"OIL_ENERGY",contacted:11,lastContact:"2025-12-09",owner:"2099248808",domain:"energia.ee"},
+  {id:"258848862076",name:"Verbund AG",country:"Austria",industry:"OIL_ENERGY",contacted:3,lastContact:"2024-04-23",owner:"2099248808",domain:"verbund.com"},
+  {id:"258850432016",name:"Fortum Oyj",country:"Finland",industry:"OIL_ENERGY",contacted:3,lastContact:"2025-11-04",owner:"29442114",domain:"fortum.com"},
+  {id:"258850432034",name:"TotalEnergies Belgium",country:"Belgium",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"totalenergies.be"},
+  {id:"258849723403",name:"Elektroprivreda Srbije",country:"Serbia",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"eps.rs"},
+  {id:"258849721303",name:"Enovos Luxembourg",country:"Luxembourg",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"enovos.lu"},
+  {id:"258850431701",name:"Fortum Polska",country:"Poland",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"fortum.pl"},
+  {id:"258849721987",name:"Repower Switzerland",country:"Switzerland",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"repower.com"},
+  {id:"258850434092",name:"Moeve",country:"Spain",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"moeve.com"},
+  {id:"258849719988",name:"Dicle Elektrik",country:"Türkiye",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"dicleelektrik.com.tr"},
+  {id:"258850430844",name:"Metlen Energy & Metals",country:"Greece",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"metlen.com"},
+  {id:"258849723100",name:"Energia",country:"Ireland",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"energia.ie"},
+  {id:"258849721555",name:"Å Energi AS",country:"Norway",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"aenergi.no"},
+  {id:"258850432555",name:"Fortum Sverige AB",country:"Sweden",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"fortum.se"},
+  {id:"258850431444",name:"Vattenfall AB",country:"Sweden",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"vattenfall.se"},
+  {id:"258849722333",name:"Lyse Produksjon AS",country:"Norway",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"lyse.no"},
+  {id:"258849722444",name:"Fortum Strøm AS",country:"Norway",industry:"OIL_ENERGY",contacted:0,lastContact:null,owner:"29840372",domain:"fortum.no"},
+  {id:"258850426001",name:"Iberdrola",country:"Spain",industry:"OIL_ENERGY",contacted:5,lastContact:"2025-08-15",owner:"29442114",domain:"iberdrola.com"},
+  {id:"258850426002",name:"Endesa",country:"Spain",industry:"OIL_ENERGY",contacted:3,lastContact:"2025-06-20",owner:"29442114",domain:"endesa.com"},
+  {id:"258850426003",name:"EDF France",country:"France",industry:"OIL_ENERGY",contacted:8,lastContact:"2025-10-15",owner:"29442114",domain:"edf.fr"},
+  {id:"258850426004",name:"Engie SA",country:"France",industry:"OIL_ENERGY",contacted:12,lastContact:"2025-11-20",owner:"2099248808",domain:"engie.com"},
+  {id:"258850426005",name:"E.ON SE",country:"Germany",industry:"OIL_ENERGY",contacted:25,lastContact:"2026-02-23",owner:"2099248808",domain:"eon.com"},
+  {id:"258850426006",name:"RWE AG",country:"Germany",industry:"OIL_ENERGY",contacted:7,lastContact:"2025-07-10",owner:"2099248808",domain:"rwe.com"},
+  {id:"258850426007",name:"EnBW",country:"Germany",industry:"OIL_ENERGY",contacted:4,lastContact:"2025-09-22",owner:"2099248808",domain:"enbw.com"},
+  {id:"258850426008",name:"Enel SpA",country:"Italy",industry:"OIL_ENERGY",contacted:6,lastContact:"2025-07-28",owner:"29205625",domain:"enel.com"},
+  {id:"258850426009",name:"A2A",country:"Italy",industry:"OIL_ENERGY",contacted:2,lastContact:"2025-04-10",owner:"29205625",domain:"a2a.eu"},
+  {id:"258850426010",name:"Wien Energie",country:"Austria",industry:"OIL_ENERGY",contacted:15,lastContact:"2025-09-30",owner:"2099248808",domain:"wienenergie.at"},
+  {id:"258850426011",name:"EVN AG",country:"Austria",industry:"OIL_ENERGY",contacted:4,lastContact:"2025-06-15",owner:"2099248808",domain:"evn.at"},
+  {id:"258850426012",name:"Vattenfall SE",country:"Sweden",industry:"OIL_ENERGY",contacted:8,lastContact:"2025-10-22",owner:"29442114",domain:"vattenfall.se"},
+  {id:"258850426013",name:"Ørsted",country:"Denmark",industry:"OIL_ENERGY",contacted:3,lastContact:"2025-05-18",owner:"29442114",domain:"orsted.com"},
+  {id:"258850426014",name:"Statkraft",country:"Norway",industry:"OIL_ENERGY",contacted:2,lastContact:"2025-03-20",owner:"29442114",domain:"statkraft.com"},
+  {id:"258850426015",name:"Tauron",country:"Poland",industry:"OIL_ENERGY",contacted:5,lastContact:"2025-09-12",owner:"29442114",domain:"tauron.pl"},
+  {id:"258850426016",name:"PGE",country:"Poland",industry:"OIL_ENERGY",contacted:4,lastContact:"2025-08-05",owner:"29442114",domain:"gkpge.pl"},
+  {id:"258850426017",name:"CEZ Group",country:"Czech Republic",industry:"OIL_ENERGY",contacted:6,lastContact:"2026-01-07",owner:"2099248808",domain:"cez.cz"},
+  {id:"258850426018",name:"Electrica SA",country:"Romania",industry:"OIL_ENERGY",contacted:8,lastContact:"2026-01-19",owner:"29442114",domain:"electrica.ro"},
+  {id:"258850426019",name:"ESB Group",country:"Ireland",industry:"OIL_ENERGY",contacted:3,lastContact:"2025-07-25",owner:"29442114",domain:"esb.ie"},
+  {id:"258850426020",name:"SSE plc",country:"United Kingdom",industry:"OIL_ENERGY",contacted:4,lastContact:"2024-11-22",owner:"2099248808",domain:"sse.com"},
+];
+
+// ═══════════════ HELPER FUNCTIONS ═══════════════
+const TODAY = new Date('2026-03-20');
+
+function daysSince(dateStr) {
+  if (!dateStr) return Infinity;
+  const d = new Date(dateStr);
+  return Math.floor((TODAY - d) / (1000*60*60*24));
+}
+
+function ownerName(id) { return OWNERS[id] || "Unassigned"; }
+function formatAmount(a) { return a ? '€' + a.toLocaleString() : '—'; }
+function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'Never'; }
+
+function getUrgency(deal) {
+  if (!deal.lastContact) return 'never';
+  const days = daysSince(deal.lastContact);
+  if (days > 180) return 'critical';
+  if (days > 90) return 'high';
+  if (days > 30) return 'medium';
+  return 'low';
+}
+
+function urgencyLabel(u) {
+  const map = {
+    critical: '<span class="urgency-tag urgency-critical">🔴 Critical</span>',
+    high: '<span class="urgency-tag urgency-high">🟠 High</span>',
+    medium: '<span class="urgency-tag urgency-medium">🟡 Medium</span>',
+    low: '<span class="urgency-tag urgency-low">🟢 Recent</span>',
+    never: '<span class="urgency-tag" style="background:rgba(90,90,114,0.2);color:var(--text-muted)">⚫ Never</span>'
+  };
+  return map[u] || u;
+}
+
+function suggestAction(deal) {
+  const u = getUrgency(deal);
+  const name = deal.name.split(' - ')[0].split(' ·')[0];
+  if (u === 'never') return `Initial outreach needed. Research ${name} on LinkedIn and prepare intro email referencing energy flexibility.`;
+  if (u === 'critical') return `Re-engagement urgently needed. Check if ${name} has new leadership or strategy changes. Consider sharing a relevant case study.`;
+  if (u === 'high') return `Schedule a check-in. Share industry update or new product feature relevant to ${name}'s market.`;
+  if (u === 'medium') return `Maintain momentum. Follow up on last conversation topics. Consider inviting to upcoming webinar or event.`;
+  return `Good cadence. Monitor for trigger events. Prepare next touchpoint based on deal progression.`;
+}
+
+function hasPurpleSheet(dealName) {
+  const name = dealName.split(' - ')[0].replace(' New Deal','').trim();
+  for (const key in PURPLE_SHEETS) {
+    if (name.includes(key) || key.includes(name)) return PURPLE_SHEETS[key];
+  }
+  return null;
+}
+
+function getStageColor(stage) {
+  const activeStages = ['Identified', 'Outreach happened', 'Connected', 'Unqualified Deal', 'Qualified Deal', 'Pending Approval', 'Biz & Tech Eval', 'Commercial Review', 'Sandbox available', 'Negotiate', 'Contract', 'Committed', 'Contract Signing Phase'];
+  if (stage === 'Closed Won') return 'stage-badge-closed';
+  if (stage === 'Nurture') return 'stage-badge-nurture';
+  if (stage === 'Disqualified' || stage === 'Refused') return 'stage-badge-disqualified';
+  if (activeStages.includes(stage)) return 'stage-badge-active';
+  return 'stage-badge-active';
+}
+
+// ═══════════════ TAB SWITCHING ═══════════════
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  event.target.closest('.tab').classList.add('active');
+  document.getElementById('mod-' + tabName).classList.add('active');
+}
+
+// ═══════════════ MODULE 0: PIPELINE HEALTH ═══════════════
+function renderRecentMoves() {
+  const tbody = document.getElementById('recent-moves-tbody');
+  const sorted = [...RECENT_MOVES].sort((a, b) => a.daysAgo - b.daysAgo);
+
+  tbody.innerHTML = sorted.map(move => `<tr>
+    <td>
+      <div style="font-weight:600">${move.name}</div>
+      <a href="${HUBSPOT_URL}/contacts/144140172/deal/${move.id}" target="_blank" class="hubspot-link">Open in HubSpot ↗</a>
+    </td>
+    <td><span class="stage-badge ${getStageColor(move.stage)}">${move.stage}</span></td>
+    <td>${formatDate(move.entered)}</td>
+    <td>${move.daysAgo} days ago</td>
+    <td>${formatAmount(move.amount)}</td>
+    <td><span class="owner-tag">${ownerName(move.owner)}</span></td>
+    <td>${move.stalled ? '<span class="urgency-tag urgency-high">⚠️ Yes</span>' : '<span class="urgency-tag urgency-low">✓ No</span>'}</td>
+  </tr>`).join('');
+}
+
+function renderStalledDeals() {
+  const tbody = document.getElementById('stalled-deals-tbody');
+  tbody.innerHTML = STALLED_DEALS.map(deal => `<tr>
+    <td>
+      <div style="font-weight:600">${deal.name}</div>
+      <a href="${HUBSPOT_URL}/contacts/144140172/deal/${deal.id}" target="_blank" class="hubspot-link">HubSpot ↗</a>
+    </td>
+    <td><span class="stage-badge ${getStageColor(deal.stage)}">${deal.stage}</span></td>
+    <td><span class="owner-tag">${ownerName(deal.owner)}</span></td>
+    <td><a href="${HUBSPOT_URL}/contacts/144140172/deal/${deal.id}" target="_blank" class="hubspot-link">View Deal ↗</a></td>
+  </tr>`).join('');
+}
+
+// ═══════════════ MODULE 1: NURTURE ═══════════════
+let currentUrgencyFilter = 'all';
+
+function setUrgency(btn, urgency) {
+  document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentUrgencyFilter = urgency;
+  filterNurture();
+}
+
+function filterNurture() {
+  const ownerFilter = document.getElementById('owner-filter').value;
+  const tbody = document.getElementById('nurture-tbody');
+
+  let deals = NURTURE_DEALS.map(d => ({
+    ...d,
+    urgency: getUrgency(d),
+    daysSilent: d.lastContact ? daysSince(d.lastContact) : null
+  }));
+
+  const urgencyOrder = {critical:0, high:1, never:2, medium:3, low:4};
+  deals.sort((a,b) => {
+    const ua = urgencyOrder[a.urgency] ?? 5;
+    const ub = urgencyOrder[b.urgency] ?? 5;
+    if (ua !== ub) return ua - ub;
+    return (b.amount||0) - (a.amount||0);
+  });
+
+  if (ownerFilter !== 'all') deals = deals.filter(d => d.owner === ownerFilter);
+  if (currentUrgencyFilter !== 'all') deals = deals.filter(d => d.urgency === currentUrgencyFilter);
+
+  const counts = {critical:0,high:0,medium:0,low:0,never:0};
+  NURTURE_DEALS.forEach(d => counts[getUrgency(d)]++);
+  document.getElementById('overdue-count').textContent = counts.critical;
+  document.getElementById('due-soon-count').textContent = counts.high;
+  document.getElementById('recent-count').textContent = counts.low;
+  document.getElementById('never-count').textContent = counts.never;
+  document.getElementById('showing-count').textContent = deals.length;
+
+  tbody.innerHTML = deals.map(d => {
+    const ps = hasPurpleSheet(d.name);
+    return `<tr>
+      <td>${urgencyLabel(d.urgency)}</td>
+      <td>
+        <div style="font-weight:600">${d.name}</div>
+        <a href="${HUBSPOT_URL}/contacts/144140172/deal/${d.id}" target="_blank" class="hubspot-link">Open in HubSpot ↗</a>
+      </td>
+      <td><span class="owner-tag">${ownerName(d.owner)}</span></td>
+      <td>${formatAmount(d.amount)}</td>
+      <td>${formatDate(d.lastContact)}</td>
+      <td style="font-weight:600;${d.daysSilent > 90 ? 'color:var(--red)' : d.daysSilent > 30 ? 'color:var(--yellow)' : 'color:var(--green)'}">${d.daysSilent !== null ? d.daysSilent + 'd' : '—'}</td>
+      <td>${ps ? '<span class="ps-indicator ps-yes"></span><a href="'+ps+'" target="_blank" style="color:var(--purple-sheet);font-size:12px">View</a>' : '<span class="ps-indicator ps-no"></span><span style="font-size:12px;color:var(--text-muted)">None</span>'}</td>
+      <td><div class="angle">${suggestAction(d)}</div></td>
+      <td><button class="review-btn" onclick="alert('In the full version, this opens a review panel where you can edit the suggestion and approve or dismiss it.')">Review →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════ MODULE 2: TRIGGERS ═══════════════
+function generateTriggers() {
+  const triggers = [];
+
+  NURTURE_DEALS.forEach(d => {
+    const days = daysSince(d.lastContact);
+    if (d.lastContact && days > 120 && d.amount >= 72000) {
+      triggers.push({
+        company: d.name.split(' - ')[0],
+        dealId: d.id,
+        type: 'stale',
+        trigger: `High-value deal dormant for ${days} days`,
+        why: `€${(d.amount||0).toLocaleString()} deal with no touchpoint since ${formatDate(d.lastContact)}. Risk of losing momentum and competitor entry.`,
+        angle: `Share a recent customer success story or industry benchmark. Reference their original interest and offer a quick 15-min update call.`,
+        owner: d.owner,
+        score: (d.amount||0) * (days/30)
+      });
+    }
+    if (!d.lastContact && d.amount >= 72000) {
+      triggers.push({
+        company: d.name.split(' - ')[0],
+        dealId: d.id,
+        type: 'high_value',
+        trigger: `High-value deal never contacted`,
+        why: `€${(d.amount||0).toLocaleString()} potential that has never been reached out to. Pure opportunity sitting idle.`,
+        angle: `Research the company's current energy strategy. Prepare a personalized intro referencing a comparable utility success case in their market.`,
+        owner: d.owner,
+        score: (d.amount||0) * 10
+      });
+    }
+  });
+
+  triggers.sort((a,b) => b.score - a.score);
+  return triggers;
+}
+
+function renderTriggers() {
+  const triggers = generateTriggers();
+  const tbody = document.getElementById('triggers-tbody');
+  document.getElementById('triggers-count').textContent = triggers.length;
+
+  tbody.innerHTML = triggers.map(t => `<tr>
+    <td>
+      <div style="font-weight:600">${t.company}</div>
+      <a href="${HUBSPOT_URL}/contacts/144140172/deal/${t.dealId}" target="_blank" class="hubspot-link">HubSpot ↗</a>
+    </td>
+    <td><span class="urgency-tag urgency-${t.type === 'high_value' ? 'critical' : 'high'}">${t.trigger}</span></td>
+    <td style="font-size:12px;color:var(--text-dim);max-width:250px">${t.why}</td>
+    <td><div class="angle">${t.angle}</div></td>
+    <td><span class="owner-tag">${ownerName(t.owner)}</span></td>
+    <td><button class="review-btn" onclick="alert('Review panel coming in Phase 2')">Review →</button></td>
+  </tr>`).join('');
+
+  const top10 = triggers.slice(0,10);
+  document.getElementById('top10-list').innerHTML = top10.map((t,i) => `
+    <li class="top10-item">
+      <span class="top10-rank">${i+1}</span>
+      <div class="top10-info">
+        <div class="top10-name">${t.company}</div>
+        <div class="top10-reason">${t.trigger}</div>
+      </div>
+      <span class="owner-tag top10-owner">${ownerName(t.owner)}</span>
+      <button class="review-btn" onclick="alert('Review panel coming in Phase 2')">Review →</button>
+    </li>
+  `).join('');
+}
+
+// ═══════════════ MODULE 3: COVERAGE ═══════════════
+function renderCoverage() {
+  const countries = {};
+  TOP120_UTILITIES.forEach(u => {
+    if (!countries[u.country]) countries[u.country] = {total:0, contacted:0, whitespace:0, utilities:[]};
+    countries[u.country].total++;
+    if (u.contacted > 0) countries[u.country].contacted++;
+    else countries[u.country].whitespace++;
+    countries[u.country].utilities.push(u);
+  });
+
+  const whitespace = TOP120_UTILITIES.filter(u => u.contacted === 0);
+  document.getElementById('whitespace-count').textContent = whitespace.length;
+  document.getElementById('coverage-count').textContent = TOP120_UTILITIES.length;
+
+  const totalContacts = TOP120_UTILITIES.reduce((s,u) => s + u.contacted, 0);
+  document.getElementById('avg-contacts').textContent = (totalContacts / TOP120_UTILITIES.length).toFixed(1);
+
+  const grid = document.getElementById('country-grid');
+  const sortedCountries = Object.entries(countries).sort((a,b) => b[1].total - a[1].total);
+  grid.innerHTML = sortedCountries.map(([country, data]) => {
+    const pct = Math.round((data.contacted / data.total) * 100);
+    return `<div class="country-card">
+      <div class="name">${country}</div>
+      <div class="stats">
+        <span><span class="stat-val">${data.total}</span> utilities</span>
+        <span><span class="stat-val" style="color:${data.whitespace > 0 ? 'var(--red)' : 'var(--green)'}">${data.whitespace}</span> untouched</span>
+      </div>
+      <div class="whitespace-bar"><div class="whitespace-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${pct}% coverage</div>
+    </div>`;
+  }).join('');
+
+  const wsTbody = document.getElementById('whitespace-tbody');
+  wsTbody.innerHTML = whitespace.map(u => `<tr>
+    <td style="font-weight:600">${u.name}</td>
+    <td>${u.country}</td>
+    <td style="font-size:12px;color:var(--text-dim)">${u.industry.replace(/_/g,' ')}</td>
+    <td><span class="owner-tag">${ownerName(u.owner)}</span></td>
+    <td style="font-size:12px;color:var(--text-dim)">—</td>
+    <td><a href="${HUBSPOT_URL}/contacts/144140172/company/${u.id}" target="_blank" class="hubspot-link">HubSpot ↗</a></td>
+  </tr>`).join('');
+}
+
+// ═══════════════ INIT ═══════════════
+function init() {
+  const ownerSelect = document.getElementById('owner-filter');
+  const activeOwners = new Set(NURTURE_DEALS.map(d => d.owner));
+  [...activeOwners].sort((a,b) => ownerName(a).localeCompare(ownerName(b))).forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = ownerName(id);
+    ownerSelect.appendChild(opt);
+  });
+
+  document.getElementById('nurture-count').textContent = NURTURE_DEALS.length;
+  filterNurture();
+  renderTriggers();
+  renderCoverage();
+  renderRecentMoves();
+  renderStalledDeals();
+}
+
+init();
+</script>
+</body>
+</html>
