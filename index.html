@@ -506,39 +506,40 @@
 <div class="module" id="mod-coverage">
   <div class="info-banner">
     <span class="icon">🌍</span>
-    <div><strong>European Market Coverage</strong> shows all Top 120 utilities by country. Identifies whitespace (never contacted) to help prioritize systematic outreach across Europe.</div>
+    <div><strong>European Market Coverage</strong> maps all B2C residential electricity suppliers across Europe (Top 120 target list + additional research). Shows which utilities are in HubSpot, which have been contacted, and which are still untouched.</div>
   </div>
 
   <div class="summary-row">
     <div class="summary-card">
-      <div class="label">Top 120 Utilities Tracked</div>
-      <div class="value">119</div>
-      <div class="sub">Across 31 European countries</div>
+      <div class="label">B2C Utilities Tracked</div>
+      <div class="value" id="total-utilities-count">0</div>
+      <div class="sub" id="total-utilities-sub">Across European countries</div>
     </div>
     <div class="summary-card">
-      <div class="label">Never Contacted</div>
+      <div class="label">In HubSpot</div>
+      <div class="value" id="in-hubspot-count" style="color:var(--green)">0</div>
+      <div class="sub" id="in-hubspot-sub">Tracked in CRM</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Contacted</div>
+      <div class="value" id="contacted-count" style="color:var(--blue)">0</div>
+      <div class="sub" id="contacted-sub">At least 1 outreach</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Untouched</div>
       <div class="value priority-high" id="whitespace-count">0</div>
-      <div class="sub">Whitespace opportunities</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">Countries Covered</div>
-      <div class="value">31</div>
-      <div class="sub">EU + neighboring</div>
-    </div>
-    <div class="summary-card">
-      <div class="label">Avg. Contacts per Utility</div>
-      <div class="value" id="avg-contacts">—</div>
-      <div class="sub">Across all tracked utilities</div>
+      <div class="sub">Not contacted or missing from CRM</div>
     </div>
   </div>
 
   <div class="section-title"><span class="icon">🗺</span> Coverage by Country</div>
   <div class="map-grid" id="country-grid"></div>
 
-  <div class="section-title"><span class="icon">⚪</span> Whitespace: Never Contacted Utilities</div>
+  <div class="section-title"><span class="icon">⚪</span> Untouched Utilities</div>
   <div class="table-container">
     <div class="table-header">
-      <h3>Untouched Top 120 Utilities</h3>
+      <h3>All Untouched B2C Utilities</h3>
+      <span style="font-size:12px;color:var(--text-dim)">Not in HubSpot or no contact activity</span>
     </div>
     <div style="overflow-x:auto">
     <table>
@@ -546,10 +547,9 @@
         <tr>
           <th>Utility</th>
           <th>Country</th>
-          <th>Industry</th>
-          <th>Current Owner</th>
-          <th>In HubSpot Since</th>
-          <th></th>
+          <th>Source</th>
+          <th>Status</th>
+          <th>Notes</th>
         </tr>
       </thead>
       <tbody id="whitespace-tbody"></tbody>
@@ -833,6 +833,215 @@ const TOP120_UTILITIES = [
   {id:"258850426020",name:"SSE plc",country:"United Kingdom",industry:"OIL_ENERGY",contacted:4,lastContact:"2024-11-22",owner:"2099248808",domain:"sse.com"},
 ];
 
+// ═══════════════ ALL B2C UTILITIES (Top 120 + Research) ═══════════════
+const ALL_UTILITIES = [
+  // Austria (10)
+  {name:"TIWAG-Tiroler Wasserkraft AG",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"illwerke vkw",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"EVN",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Wien Energie GmbH",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Salzburg AG",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Kelag",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Energie Steiermark AG",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Verbund",country:"Austria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Energie AG Oberösterreich",country:"Austria",source:"Research",inHubspot:true,contacted:true},
+  {name:"aWATTar",country:"Austria",source:"Research",inHubspot:false,contacted:false},
+  // Belgium (6)
+  {name:"Luminus (EDF)",country:"Belgium",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"ENGIE (Electrabel)",country:"Belgium",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Eneco Belgium",country:"Belgium",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"TotalEnergies (Lampiris)",country:"Belgium",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Mega",country:"Belgium",source:"Research",inHubspot:true,contacted:true},
+  {name:"Bolt Energy",country:"Belgium",source:"Research",inHubspot:false,contacted:false},
+  // Bulgaria (4)
+  {name:"Electrohold Sales (ex-CEZ)",country:"Bulgaria",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"EVN Bulgaria Electricity Supply",country:"Bulgaria",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"ENERGO-PRO Sales",country:"Bulgaria",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"EVN Bulgaria EP",country:"Bulgaria",source:"Research",inHubspot:true,contacted:true},
+  // Croatia (2)
+  {name:"HEP",country:"Croatia",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"HEP Elektra",country:"Croatia",source:"Research",inHubspot:false,contacted:false},
+  // Czech Republic (4)
+  {name:"ČEZ Prodej",country:"Czech Republic",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Pražská energetika (PRE)",country:"Czech Republic",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"E.ON Energie, a.s.",country:"Czech Republic",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"innogy CZ",country:"Czech Republic",source:"Research",inHubspot:false,contacted:false},
+  // Denmark (5)
+  {name:"Norlys",country:"Denmark",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Ørsted",country:"Denmark",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Andel Energi A/S",country:"Denmark",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"EWII",country:"Denmark",source:"Research",inHubspot:false,contacted:false},
+  {name:"Vindstød",country:"Denmark",source:"Research",inHubspot:false,contacted:false},
+  // Estonia (1)
+  {name:"Eesti Energia (Enefit)",country:"Estonia",source:"Top 120",inHubspot:true,contacted:true},
+  // Finland (4)
+  {name:"Fortum",country:"Finland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Helen Oy (Helsinki Energy)",country:"Finland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Caruna",country:"Finland",source:"Research",inHubspot:false,contacted:false},
+  {name:"Oomi",country:"Finland",source:"Research",inHubspot:false,contacted:false},
+  // France (12)
+  {name:"TotalEnergies France",country:"France",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"EDF FR",country:"France",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"ENGIE France",country:"France",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Sorégies",country:"France",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Électricité de Strasbourg",country:"France",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Eni Plenitude France",country:"France",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Dyneff",country:"France",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Alterna Énergie",country:"France",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Alpiq France",country:"France",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Vattenfall France",country:"France",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"OHM Énergie",country:"France",source:"Research",inHubspot:false,contacted:false},
+  {name:"Leclerc Énergies",country:"France",source:"Research",inHubspot:false,contacted:false},
+  // Germany (18)
+  {name:"E.ON Deutschland GmbH",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"EnBW",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Vattenfall Germany",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Stadtwerke München",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"EWE AG",country:"Germany",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"MVV Energie AG",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Enercity",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"SachsenEnergie AG",country:"Germany",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Stadtwerke Duisburg AG",country:"Germany",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"N-ERGIE AG",country:"Germany",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"RheinEnergie AG",country:"Germany",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Stadtwerke Leipzig",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Mainova AG",country:"Germany",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"RWE / innogy",country:"Germany",source:"Research",inHubspot:true,contacted:true},
+  {name:"Yello Strom (EnBW)",country:"Germany",source:"Research",inHubspot:false,contacted:false},
+  {name:"Lichtblick",country:"Germany",source:"Research",inHubspot:false,contacted:false},
+  {name:"Stadtwerke Köln",country:"Germany",source:"Research",inHubspot:false,contacted:false},
+  {name:"E.WIE EINFACH (E.ON)",country:"Germany",source:"Research",inHubspot:false,contacted:false},
+  // Greece (6)
+  {name:"HERON (GEK TERNA Group)",country:"Greece",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"PPC",country:"Greece",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"ELPEDISON",country:"Greece",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Mytilineos (Protergia)",country:"Greece",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Zenith",country:"Greece",source:"Research",inHubspot:true,contacted:true},
+  {name:"Volterra",country:"Greece",source:"Research",inHubspot:false,contacted:false},
+  // Hungary (3)
+  {name:"MVM Group",country:"Hungary",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"E.ON Hungária",country:"Hungary",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"ELMŰ-ÉMÁSZ (innogy)",country:"Hungary",source:"Research",inHubspot:false,contacted:false},
+  // Iceland (2)
+  {name:"ON Power (Orka náttúrunnar)",country:"Iceland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"HS Orka",country:"Iceland",source:"Top 120",inHubspot:true,contacted:false},
+  // Ireland (6)
+  {name:"Electric Ireland",country:"Ireland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Bord Gáis Energy",country:"Ireland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"SSE Airtricity",country:"Ireland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Energia Group",country:"Ireland",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Flogas",country:"Ireland",source:"Research",inHubspot:false,contacted:false},
+  {name:"Pinergy",country:"Ireland",source:"Research",inHubspot:false,contacted:false},
+  // Italy (9)
+  {name:"Plenitude Italy",country:"Italy",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Hera S.p.A.",country:"Italy",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Acea Innovation",country:"Italy",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Enel",country:"Italy",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Edison",country:"Italy",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"A2A",country:"Italy",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Iren",country:"Italy",source:"Research",inHubspot:true,contacted:true},
+  {name:"Sorgenia",country:"Italy",source:"Research",inHubspot:true,contacted:false},
+  {name:"Dolomiti Energia",country:"Italy",source:"Research",inHubspot:true,contacted:true},
+  // Latvia (2)
+  {name:"Latvenergo (Elektrum)",country:"Latvia",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Enefit Latvia",country:"Latvia",source:"Research",inHubspot:false,contacted:false},
+  // Lithuania (2)
+  {name:"Ignitis (Ignitis Group)",country:"Lithuania",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Enefit Lithuania",country:"Lithuania",source:"Research",inHubspot:false,contacted:false},
+  // Luxembourg (1)
+  {name:"Enovos",country:"Luxembourg",source:"Top 120",inHubspot:true,contacted:false},
+  // Netherlands (8)
+  {name:"Essent",country:"Netherlands",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Vattenfall Netherlands (Nuon)",country:"Netherlands",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Eneco Netherlands",country:"Netherlands",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Engie Netherlands",country:"Netherlands",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Oxxio",country:"Netherlands",source:"Research",inHubspot:false,contacted:false},
+  {name:"Greenchoice",country:"Netherlands",source:"Research",inHubspot:false,contacted:false},
+  {name:"Budget Energie",country:"Netherlands",source:"Research",inHubspot:false,contacted:false},
+  {name:"Pure Energie",country:"Netherlands",source:"Research",inHubspot:false,contacted:false},
+  // Norway (6)
+  {name:"Fortum Strøm",country:"Norway",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Å Energi AS",country:"Norway",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Lyse Produksjon AS",country:"Norway",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Elmera Group ASA",country:"Norway",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Tibber",country:"Norway",source:"Research",inHubspot:false,contacted:false},
+  {name:"Statkraft",country:"Norway",source:"Research",inHubspot:true,contacted:true},
+  // Poland (6)
+  {name:"Grupa Enea",country:"Poland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"PGE Polska Grupa Energetyczna",country:"Poland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Energa S.A. (Orlen)",country:"Poland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Tauron Polska Energia S.A.",country:"Poland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Fortum Polska",country:"Poland",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"innogy Polska",country:"Poland",source:"Research",inHubspot:false,contacted:false},
+  // Portugal (5)
+  {name:"Goldenergy",country:"Portugal",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"EDP - Energias de Portugal",country:"Portugal",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"GALP Energia",country:"Portugal",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Endesa Portugal",country:"Portugal",source:"Research",inHubspot:false,contacted:false},
+  {name:"Iberdrola Portugal",country:"Portugal",source:"Research",inHubspot:false,contacted:false},
+  // Romania (5)
+  {name:"PPC Romania",country:"Romania",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Hidroelectrica",country:"Romania",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Electrica (Furnizare)",country:"Romania",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"E.ON Romania",country:"Romania",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Enel Romania",country:"Romania",source:"Research",inHubspot:false,contacted:false},
+  // Serbia (2)
+  {name:"Elektroprivreda Srbije (EPS)",country:"Serbia",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"EPS Snabdevanje",country:"Serbia",source:"Research",inHubspot:false,contacted:false},
+  // Slovakia (3)
+  {name:"ZSE Energia",country:"Slovakia",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"SSE (Stredoslovenská energetika)",country:"Slovakia",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"VSE (Východoslovenská energetika)",country:"Slovakia",source:"Top 120",inHubspot:false,contacted:false},
+  // Slovenia (2)
+  {name:"Petrol d.d.",country:"Slovenia",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"GEN Group",country:"Slovenia",source:"Top 120",inHubspot:true,contacted:true},
+  // Spain (10)
+  {name:"Acciona",country:"Spain",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Endesa (Enel)",country:"Spain",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Repsol",country:"Spain",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Naturgy",country:"Spain",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Iberdrola Spain",country:"Spain",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Grupo MASMOVIL",country:"Spain",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Grupo DISA",country:"Spain",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Holaluz",country:"Spain",source:"Research",inHubspot:false,contacted:false},
+  {name:"Octopus Energy Spain",country:"Spain",source:"Research",inHubspot:false,contacted:false},
+  {name:"TotalEnergies Spain",country:"Spain",source:"Research",inHubspot:false,contacted:false},
+  // Sweden (6)
+  {name:"E.ON Sverige",country:"Sweden",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Vattenfall AB",country:"Sweden",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Fortum Sweden",country:"Sweden",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Tibber Sweden",country:"Sweden",source:"Research",inHubspot:false,contacted:false},
+  {name:"Ellevio",country:"Sweden",source:"Research",inHubspot:false,contacted:false},
+  {name:"Göteborgs Energi",country:"Sweden",source:"Research",inHubspot:false,contacted:false},
+  // Switzerland (11)
+  {name:"CKW",country:"Switzerland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Groupe E",country:"Switzerland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Primeo Energie",country:"Switzerland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Repower AG",country:"Switzerland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Romande Energie",country:"Switzerland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"SIG Services Industriels de Genève",country:"Switzerland",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"BKW Energie",country:"Switzerland",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"Axpo",country:"Switzerland",source:"Research",inHubspot:true,contacted:true},
+  {name:"Alpiq (CH retail)",country:"Switzerland",source:"Research",inHubspot:true,contacted:true},
+  {name:"EWZ Zürich",country:"Switzerland",source:"Research",inHubspot:true,contacted:true},
+  {name:"IWB Basel",country:"Switzerland",source:"Research",inHubspot:false,contacted:false},
+  // Türkiye (2)
+  {name:"Dicle Elektrik",country:"Türkiye",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Enerjisa Enerji A.Ş.",country:"Türkiye",source:"Top 120",inHubspot:false,contacted:false},
+  // United Kingdom (10)
+  {name:"British Gas",country:"United Kingdom",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"OVO",country:"United Kingdom",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"EDF Energy",country:"United Kingdom",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"E.ON Next",country:"United Kingdom",source:"Top 120",inHubspot:true,contacted:true},
+  {name:"ScottishPower",country:"United Kingdom",source:"Top 120",inHubspot:true,contacted:false},
+  {name:"Utility Warehouse Limited",country:"United Kingdom",source:"Top 120",inHubspot:false,contacted:false},
+  {name:"Octopus Energy",country:"United Kingdom",source:"Research",inHubspot:false,contacted:false},
+  {name:"Utilita",country:"United Kingdom",source:"Research",inHubspot:false,contacted:false},
+  {name:"Good Energy",country:"United Kingdom",source:"Research",inHubspot:false,contacted:false},
+  {name:"So Energy",country:"United Kingdom",source:"Research",inHubspot:false,contacted:false},
+];
+
+
 // ═══════════════ HELPER FUNCTIONS ═══════════════
 const TODAY = new Date('2026-03-20');
 
@@ -1061,45 +1270,59 @@ function renderTriggers() {
 // ═══════════════ MODULE 3: COVERAGE ═══════════════
 function renderCoverage() {
   const countries = {};
-  TOP120_UTILITIES.forEach(u => {
-    if (!countries[u.country]) countries[u.country] = {total:0, contacted:0, whitespace:0, utilities:[]};
+  ALL_UTILITIES.forEach(u => {
+    if (!countries[u.country]) countries[u.country] = {total:0, contacted:0, untouched:0, inHubspot:0, utilities:[]};
     countries[u.country].total++;
-    if (u.contacted > 0) countries[u.country].contacted++;
-    else countries[u.country].whitespace++;
+    if (u.contacted) { countries[u.country].contacted++; }
+    else { countries[u.country].untouched++; }
+    if (u.inHubspot) countries[u.country].inHubspot++;
     countries[u.country].utilities.push(u);
   });
 
-  const whitespace = TOP120_UTILITIES.filter(u => u.contacted === 0);
-  document.getElementById('whitespace-count').textContent = whitespace.length;
-  document.getElementById('coverage-count').textContent = TOP120_UTILITIES.length;
-
-  const totalContacts = TOP120_UTILITIES.reduce((s,u) => s + u.contacted, 0);
-  document.getElementById('avg-contacts').textContent = (totalContacts / TOP120_UTILITIES.length).toFixed(1);
+  const untouched = ALL_UTILITIES.filter(u => !u.contacted);
+  const inHubspot = ALL_UTILITIES.filter(u => u.inHubspot);
+  const contacted = ALL_UTILITIES.filter(u => u.contacted);
+  document.getElementById('total-utilities-count').textContent = ALL_UTILITIES.length;
+  document.getElementById('total-utilities-sub').textContent = `Top 120 + research across ${Object.keys(countries).length} countries`;
+  document.getElementById('in-hubspot-count').textContent = inHubspot.length;
+  document.getElementById('in-hubspot-sub').textContent = `${Math.round(inHubspot.length/ALL_UTILITIES.length*100)}% of all tracked`;
+  document.getElementById('contacted-count').textContent = contacted.length;
+  document.getElementById('contacted-sub').textContent = `${Math.round(contacted.length/ALL_UTILITIES.length*100)}% outreach rate`;
+  document.getElementById('whitespace-count').textContent = untouched.length;
+  document.getElementById('coverage-count').textContent = ALL_UTILITIES.length;
 
   const grid = document.getElementById('country-grid');
   const sortedCountries = Object.entries(countries).sort((a,b) => b[1].total - a[1].total);
   grid.innerHTML = sortedCountries.map(([country, data]) => {
     const pct = Math.round((data.contacted / data.total) * 100);
+    const barColor = pct >= 75 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
     return `<div class="country-card">
       <div class="name">${country}</div>
       <div class="stats">
         <span><span class="stat-val">${data.total}</span> utilities</span>
-        <span><span class="stat-val" style="color:${data.whitespace > 0 ? 'var(--red)' : 'var(--green)'}">${data.whitespace}</span> untouched</span>
+        <span><span class="stat-val" style="color:${data.untouched > 0 ? 'var(--red)' : 'var(--green)'}">${data.untouched}</span> untouched</span>
       </div>
-      <div class="whitespace-bar"><div class="whitespace-fill" style="width:${pct}%"></div></div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${pct}% coverage</div>
+      <div class="whitespace-bar"><div class="whitespace-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px">${pct}% contacted · ${data.inHubspot}/${data.total} in CRM</div>
     </div>`;
   }).join('');
 
   const wsTbody = document.getElementById('whitespace-tbody');
-  wsTbody.innerHTML = whitespace.map(u => `<tr>
-    <td style="font-weight:600">${u.name}</td>
-    <td>${u.country}</td>
-    <td style="font-size:12px;color:var(--text-dim)">${u.industry.replace(/_/g,' ')}</td>
-    <td><span class="owner-tag">${ownerName(u.owner)}</span></td>
-    <td style="font-size:12px;color:var(--text-dim)">—</td>
-    <td><a href="${HUBSPOT_URL}/contacts/144140172/company/${u.id}" target="_blank" class="hubspot-link">HubSpot ↗</a></td>
-  </tr>`).join('');
+  wsTbody.innerHTML = untouched.sort((a,b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name)).map(u => {
+    const statusBadge = u.inHubspot
+      ? '<span class="stage-badge" style="background:var(--yellow);color:#000">In CRM — not contacted</span>'
+      : '<span class="stage-badge" style="background:var(--red);color:#fff">Not in CRM</span>';
+    const sourceBadge = u.source === 'Top 120'
+      ? '<span style="color:var(--accent);font-weight:600">Top 120</span>'
+      : '<span style="color:var(--text-dim)">Research</span>';
+    return `<tr>
+      <td style="font-weight:600">${u.name}</td>
+      <td>${u.country}</td>
+      <td>${sourceBadge}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${u.inHubspot ? 'Exists in HubSpot but no outreach recorded' : 'Not found in HubSpot CRM'}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ═══════════════ INIT ═══════════════
