@@ -1,0 +1,1413 @@
+// App.js — Outreach Automation Dashboard
+// Iteration 4: Merged — React UI + HTML Dashboard Data + alle Module
+
+import { useState, useMemo } from "react";
+import {
+  LayoutDashboard, RefreshCw, Zap, Target, Globe, Users,
+  ChevronRight, Bell, Settings, Search, Linkedin, Newspaper,
+  MousePointer, Sparkles, CheckCircle, Clock, ArrowRight,
+  Trophy, Eye, Send, AlertCircle, TrendingUp, DollarSign,
+  BarChart2, Loader, AlertTriangle, Filter, ExternalLink,
+} from "lucide-react";
+import { useHubSpotDeals } from "./useHubSpot";
+import { formatCurrency, formatDate } from "./hubspot";
+
+// ═══════════════════════════════════════════════════════════════
+// STATIC DATA — aus HTML-Dashboard übernommen
+// ═══════════════════════════════════════════════════════════════
+
+const OWNERS = {
+  "2099248808": "Christian K.",
+  "29205625":   "Marco R.",
+  "29442114":   "Erik L.",
+  "29840372":   "Sarah M.",
+  "1848677060": "Jan V.",
+};
+
+const NURTURE_DEALS = [
+  { id:"270143678001", name:"Norlys",                      owner:"29442114",   amount:72000,  lastContact:"2025-08-20", modified:"2026-03-11", purpleSheet:true },
+  { id:"270143678002", name:"Wien Energie GmbH",           owner:"2099248808", amount:72000,  lastContact:"2025-09-30", modified:"2026-03-10", purpleSheet:true },
+  { id:"270143678003", name:"Vattenfall Netherlands",      owner:"29442114",   amount:72000,  lastContact:"2026-02-12", modified:"2026-03-09", purpleSheet:true },
+  { id:"270143678004", name:"Eesti Energia",               owner:"2099248808", amount:72000,  lastContact:"2025-12-09", modified:"2026-03-08", purpleSheet:false },
+  { id:"270143678005", name:"E.ON SE",                     owner:"2099248808", amount:100000, lastContact:"2026-02-23", modified:"2026-03-08", purpleSheet:true },
+  { id:"270143678006", name:"Electrica SA",                owner:"29442114",   amount:72000,  lastContact:"2026-01-19", modified:"2026-03-07", purpleSheet:false },
+  { id:"270143678007", name:"CEZ Group",                   owner:"2099248808", amount:72000,  lastContact:"2026-01-07", modified:"2026-03-07", purpleSheet:true },
+  { id:"270143678008", name:"Engie Belgium",               owner:"2099248808", amount:36000,  lastContact:"2026-02-25", modified:"2026-03-02", purpleSheet:false },
+  { id:"270143678009", name:"Kelag",                       owner:"1848677060", amount:72000,  lastContact:"2026-02-26", modified:"2026-03-02", purpleSheet:true },
+  { id:"270143678010", name:"Edison",                      owner:"29205625",   amount:72000,  lastContact:"2026-02-11", modified:"2026-03-01", purpleSheet:false },
+  { id:"270143678011", name:"Enel",                        owner:"29205625",   amount:100000, lastContact:"2025-07-28", modified:"2026-02-03", purpleSheet:true },
+  { id:"270143678012", name:"EDP Energias de Portugal",    owner:"29442114",   amount:0,      lastContact:"2025-06-04", modified:"2026-02-04", purpleSheet:false },
+  { id:"270143678013", name:"E.ON Next",                   owner:"2099248808", amount:72000,  lastContact:"2024-11-26", modified:"2026-02-05", purpleSheet:true },
+  { id:"270143678014", name:"Romande Energie",             owner:"1848677060", amount:72000,  lastContact:"2024-12-16", modified:"2026-02-05", purpleSheet:false },
+  { id:"270143678015", name:"VERBUND Energy4Business",     owner:"2099248808", amount:72000,  lastContact:"2024-11-19", modified:"2026-03-03", purpleSheet:true },
+  { id:"270143678016", name:"Thüga",                       owner:"2099248808", amount:72000,  lastContact:"2024-10-16", modified:"2026-02-05", purpleSheet:false },
+  { id:"270143678017", name:"PFALZWERKE AG",               owner:"2099248808", amount:72000,  lastContact:"2024-11-18", modified:"2026-02-06", purpleSheet:false },
+  { id:"270143678018", name:"LichtBlick",                  owner:"2099248808", amount:72000,  lastContact:"2025-06-05", modified:"2026-02-05", purpleSheet:true },
+  { id:"270143678019", name:"Stadtwerke Düsseldorf",       owner:"2099248808", amount:72000,  lastContact:"2024-08-06", modified:"2026-02-04", purpleSheet:false },
+  { id:"270143678020", name:"Verbund",                     owner:"2099248808", amount:72000,  lastContact:"2024-04-23", modified:"2026-03-03", purpleSheet:true },
+  { id:"270143678021", name:"eprimo GmbH",                 owner:"2099248808", amount:72000,  lastContact:"2024-08-19", modified:"2026-03-03", purpleSheet:false },
+  { id:"270143678022", name:"Burgenland Energie",          owner:"1848677060", amount:72000,  lastContact:"2024-11-07", modified:"2026-03-04", purpleSheet:false },
+  { id:"270143678023", name:"rabot.charge",                owner:"1848677060", amount:72000,  lastContact:"2024-03-18", modified:"2026-03-02", purpleSheet:false },
+  { id:"270143678024", name:"Göteborg Energi",             owner:"2099248808", amount:72000,  lastContact:"2024-09-11", modified:"2026-02-04", purpleSheet:false },
+  { id:"270143678025", name:"Öresundskraft AB",            owner:"2099248808", amount:72000,  lastContact:"2025-06-05", modified:"2026-02-05", purpleSheet:false },
+  { id:"270143678026", name:"PPC",                         owner:"2099248808", amount:72000,  lastContact:null,         modified:"2026-01-20", purpleSheet:false },
+  { id:"270143678027", name:"EWE AG",                      owner:"2099248808", amount:36000,  lastContact:null,         modified:"2026-02-16", purpleSheet:false },
+  { id:"270143678028", name:"Hera S.p.A.",                 owner:"29205625",   amount:36000,  lastContact:null,         modified:"2026-01-20", purpleSheet:false },
+  { id:"270143678029", name:"SWK Energie GmbH",            owner:"2099248808", amount:72000,  lastContact:null,         modified:"2025-11-27", purpleSheet:false },
+  { id:"270143678030", name:"Luminus",                     owner:"2099248808", amount:36000,  lastContact:null,         modified:"2026-01-20", purpleSheet:false },
+];
+
+const ALL_UTILITIES = [
+  // Austria
+  { name:"TIWAG-Tiroler Wasserkraft AG",      country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"illwerke vkw",                       country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"EVN AG",                             country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Wien Energie GmbH",                  country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Salzburg AG",                        country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Kelag",                              country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Energie Steiermark AG",              country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Verbund",                            country:"Austria",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Energie AG Oberösterreich",          country:"Austria",        source:"Research", inHubspot:false, contacted:false },
+  { name:"aWATTar",                            country:"Austria",        source:"Research", inHubspot:true,  contacted:false },
+  // Belgium
+  { name:"Luminus (EDF)",                      country:"Belgium",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"ENGIE (Electrabel)",                 country:"Belgium",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Eneco Belgium",                      country:"Belgium",        source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"TotalEnergies (Lampiris)",           country:"Belgium",        source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Mega",                               country:"Belgium",        source:"Research", inHubspot:false, contacted:false },
+  { name:"Bolt Energy",                        country:"Belgium",        source:"Research", inHubspot:false, contacted:false },
+  // Czech Republic
+  { name:"ČEZ Prodej",                         country:"Czech Republic", source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Pražská energetika (PRE)",           country:"Czech Republic", source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"E.ON Energie a.s.",                  country:"Czech Republic", source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"innogy CZ",                          country:"Czech Republic", source:"Research", inHubspot:true,  contacted:false },
+  // Denmark
+  { name:"Norlys",                             country:"Denmark",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Ørsted",                             country:"Denmark",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Andel Energi A/S",                   country:"Denmark",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"EWII",                               country:"Denmark",        source:"Research", inHubspot:true,  contacted:false },
+  { name:"Vindstød",                           country:"Denmark",        source:"Research", inHubspot:false, contacted:false },
+  // Finland
+  { name:"Fortum",                             country:"Finland",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Helen Oy (Helsinki Energy)",         country:"Finland",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Caruna",                             country:"Finland",        source:"Research", inHubspot:false, contacted:false },
+  { name:"Oomi",                               country:"Finland",        source:"Research", inHubspot:true,  contacted:false },
+  // France
+  { name:"TotalEnergies France",               country:"France",         source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"EDF FR",                             country:"France",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"ENGIE France",                       country:"France",         source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Vattenfall France",                  country:"France",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Eni Plenitude France",               country:"France",         source:"Top 120",  inHubspot:true,  contacted:true },
+  // Germany
+  { name:"E.ON Deutschland GmbH",              country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"EnBW",                               country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Vattenfall Germany",                 country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Stadtwerke München",                 country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"RWE AG",                             country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"EWE AG",                             country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"MVV Energie AG",                     country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Enercity",                           country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"N-ERGIE AG",                         country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"RheinEnergie AG",                    country:"Germany",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"LichtBlick",                         country:"Germany",        source:"Research", inHubspot:true,  contacted:true },
+  { name:"Yello Strom (EnBW)",                 country:"Germany",        source:"Research", inHubspot:true,  contacted:false },
+  // Greece
+  { name:"HERON (GEK TERNA Group)",            country:"Greece",         source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"PPC",                                country:"Greece",         source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"ELPEDISON",                          country:"Greece",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Zenith",                             country:"Greece",         source:"Research", inHubspot:false, contacted:false },
+  // Hungary
+  { name:"MVM Group",                          country:"Hungary",        source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"E.ON Hungária",                      country:"Hungary",        source:"Top 120",  inHubspot:true,  contacted:true },
+  // Ireland
+  { name:"Electric Ireland",                   country:"Ireland",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Bord Gáis Energy",                   country:"Ireland",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"SSE Airtricity",                     country:"Ireland",        source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Energia Group",                      country:"Ireland",        source:"Top 120",  inHubspot:true,  contacted:false },
+  // Italy
+  { name:"Plenitude Italy",                    country:"Italy",          source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Enel",                               country:"Italy",          source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Edison",                             country:"Italy",          source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"A2A",                                country:"Italy",          source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Hera S.p.A.",                        country:"Italy",          source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Dolomiti Energia",                   country:"Italy",          source:"Research", inHubspot:true,  contacted:true },
+  // Netherlands
+  { name:"Essent",                             country:"Netherlands",    source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Vattenfall Netherlands (Nuon)",      country:"Netherlands",    source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Eneco Netherlands",                  country:"Netherlands",    source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Engie Netherlands",                  country:"Netherlands",    source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Greenchoice",                        country:"Netherlands",    source:"Research", inHubspot:true,  contacted:false },
+  // Norway
+  { name:"Fortum Strøm",                       country:"Norway",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Å Energi AS",                        country:"Norway",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Tibber",                             country:"Norway",         source:"Research", inHubspot:true,  contacted:false },
+  { name:"Statkraft",                          country:"Norway",         source:"Research", inHubspot:true,  contacted:false },
+  // Poland
+  { name:"Tauron Polska Energia S.A.",         country:"Poland",         source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Fortum Polska",                      country:"Poland",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Grupa Enea",                         country:"Poland",         source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"PGE Polska Grupa Energetyczna",      country:"Poland",         source:"Top 120",  inHubspot:false, contacted:false },
+  // Portugal
+  { name:"EDP - Energias de Portugal",         country:"Portugal",       source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"GALP Energia",                       country:"Portugal",       source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Goldenergy",                         country:"Portugal",       source:"Top 120",  inHubspot:false, contacted:false },
+  // Romania
+  { name:"PPC Romania",                        country:"Romania",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"E.ON Romania",                       country:"Romania",        source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Electrica (Furnizare)",              country:"Romania",        source:"Top 120",  inHubspot:false, contacted:false },
+  // Spain
+  { name:"Iberdrola",                          country:"Spain",          source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Endesa",                             country:"Spain",          source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Naturgy",                            country:"Spain",          source:"Top 120",  inHubspot:false, contacted:false },
+  { name:"Acciona",                            country:"Spain",          source:"Top 120",  inHubspot:false, contacted:false },
+  // Sweden
+  { name:"Vattenfall AB",                      country:"Sweden",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Fortum Sverige AB",                  country:"Sweden",         source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Göteborg Energi",                    country:"Sweden",         source:"Top 120",  inHubspot:true,  contacted:false },
+  // Switzerland
+  { name:"Axpo Group",                         country:"Switzerland",    source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"BKW Energie AG",                     country:"Switzerland",    source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Romande Energie",                    country:"Switzerland",    source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"Repower Switzerland",               country:"Switzerland",    source:"Research", inHubspot:false, contacted:false },
+  // UK
+  { name:"Octopus Energy",                     country:"United Kingdom", source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"EDF Energy (UK)",                    country:"United Kingdom", source:"Top 120",  inHubspot:true,  contacted:true },
+  { name:"SSE plc",                            country:"United Kingdom", source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"Utilita Energy",                     country:"United Kingdom", source:"Top 120",  inHubspot:true,  contacted:false },
+  { name:"OVO Energy",                         country:"United Kingdom", source:"Research", inHubspot:false, contacted:false },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// MOCK DATA — Trigger Outreach & Top Targets
+// ═══════════════════════════════════════════════════════════════
+
+export const MOCK_DATA = {
+  kpis: {
+    nurturePipeline: 149,
+    triggerSignalsThisWeek: 12,
+    pendingMessages: 8,
+    marketCoverage: 34,
+  },
+  triggerSignals: [
+    {
+      id: "tr_001", company: "Stadtwerke München", contact: "Thomas Bauer",
+      contactTitle: "Head of Grid Operations", type: "linkedin_post",
+      signal: "Thomas Bauer hat einen Beitrag über Smart Metering veröffentlicht: 'Die Zukunft der Energieverteilung liegt in intelligenten Netzen – wir sind dabei.'",
+      detectedAt: "2026-03-10", relevance: "high",
+      suggestedAction: "LinkedIn-Kommentar + Follow-up Message",
+      drafted: false, draftMessage: "",
+    },
+    {
+      id: "tr_002", company: "Vattenfall Europe", contact: "Erik Lindström",
+      contactTitle: "VP Innovation", type: "news",
+      signal: "Vattenfall kündigt 50M€ Investment in EV-Ladeinfrastruktur an – Fokus auf intelligente Netzintegration.",
+      detectedAt: "2026-03-09", relevance: "high",
+      suggestedAction: "Email mit Bezug auf EV-Charging Integration",
+      drafted: true,
+      draftMessage: "Hallo Erik,\n\nich habe heute von Vattenfalls Investment in EV-Infrastruktur gelesen – herzlichen Glückwunsch zu diesem wichtigen Schritt!\n\nGenau in diesem Bereich können wir euch unterstützen: unsere Plattform ermöglicht die nahtlose Integration von EV-Ladestationen in bestehende Netzstrukturen...\n\nWäre ein kurzes 15-minütiges Gespräch diese Woche möglich?\n\nBeste Grüße",
+    },
+    {
+      id: "tr_003", company: "RWE Digital", contact: "Maria Schmidt",
+      contactTitle: "Head of Digital Products", type: "website_change",
+      signal: "RWE Digital hat 3 neue Stellen für 'EV Integration Engineers' ausgeschrieben – deutliches Signal für strategischen Ausbau.",
+      detectedAt: "2026-03-08", relevance: "medium",
+      suggestedAction: "Warmer LinkedIn-Outreach",
+      drafted: false, draftMessage: "",
+    },
+    {
+      id: "tr_004", company: "E.ON Digital Technology", contact: "Sarah Klein",
+      contactTitle: "Digital Transformation Lead", type: "linkedin_post",
+      signal: "Sarah Klein hat ein Whitepaper über Vehicle-to-Grid Technologien geteilt und kommentiert: 'V2G wird die Energiewende beschleunigen.'",
+      detectedAt: "2026-03-07", relevance: "high",
+      suggestedAction: "Direktnachricht mit Bezug auf V2G",
+      drafted: false, draftMessage: "",
+    },
+    {
+      id: "tr_005", company: "Eneco Netherlands", contact: "Jan van der Berg",
+      contactTitle: "CTO", type: "news",
+      signal: "Eneco gewinnt Ausschreibung für Smart Grid Projekt in Rotterdam – größtes Projekt in der Unternehmensgeschichte.",
+      detectedAt: "2026-03-06", relevance: "medium",
+      suggestedAction: "Congratulations Email + Produkt-Relevanz",
+      drafted: false, draftMessage: "",
+    },
+  ],
+  topTargets: [
+    { rank: 1,  company: "Vattenfall Europe",      contact: "Erik Lindström",   reason: "EV Investment Announcement",         score: 98, stage: "Nurture" },
+    { rank: 2,  company: "Stadtwerke München",      contact: "Thomas Bauer",     reason: "LinkedIn: Smart Metering",           score: 94, stage: "Nurture" },
+    { rank: 3,  company: "E.ON Digital Technology", contact: "Sarah Klein",      reason: "V2G Whitepaper geteilt",             score: 89, stage: "Nurture" },
+    { rank: 4,  company: "RWE Digital",             contact: "Maria Schmidt",    reason: "3 neue EV Engineer Stellen",         score: 82, stage: "Cold" },
+    { rank: 5,  company: "Eneco Netherlands",       contact: "Jan van der Berg", reason: "Rotterdam Smart Grid Win",           score: 78, stage: "Nurture" },
+    { rank: 6,  company: "Enel X Italy",            contact: "Marco Rossi",      reason: "Neue Produktseite EV-Integration",   score: 71, stage: "Not contacted" },
+    { rank: 7,  company: "Iberdrola Digital",       contact: "Carlos García",    reason: "LinkedIn: 500+ neue Follower",       score: 65, stage: "Cold" },
+    { rank: 8,  company: "Fortum Finland",          contact: "Mikko Virtanen",   reason: "Quartalsreport: EV-Fokus",           score: 61, stage: "Nurture" },
+    { rank: 9,  company: "Ørsted Denmark",          contact: "Lars Nielsen",     reason: "Job Posting: Grid Software",         score: 57, stage: "Not contacted" },
+    { rank: 10, company: "BKW Energie",             contact: "Petra Müller",     reason: "Konferenzteilnahme: EVS Europe",     score: 52, stage: "Cold" },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIG MAPS
+// ═══════════════════════════════════════════════════════════════
+
+const SIGNAL_TYPES = {
+  linkedin_post:  { label: "LinkedIn", icon: Linkedin,     color: "#0A66C2", bg: "#0A66C215" },
+  news:           { label: "News",     icon: Newspaper,    color: "#F59E0B", bg: "#F59E0B15" },
+  website_change: { label: "Website",  icon: MousePointer, color: "#10B981", bg: "#10B98115" },
+};
+
+const RELEVANCE_CONFIG = {
+  high:   { label: "Hoch",    color: "#10B981", bg: "#10B98120" },
+  medium: { label: "Mittel",  color: "#F59E0B", bg: "#F59E0B20" },
+  low:    { label: "Niedrig", color: "#94A3B8", bg: "#94A3B820" },
+};
+
+const STAGE_COLORS = {
+  "Nurture":       { color: "#6366F1", bg: "#6366F120" },
+  "Cold":          { color: "#94A3B8", bg: "#94A3B820" },
+  "Not contacted": { color: "#EF4444", bg: "#EF444420" },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SHARED COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+
+function LoadingState({ message = "Lade Daten..." }) {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 0", color: "#475569" }}>
+      <Loader size={28} color="#6366F1" style={{ animation: "spin 1s linear infinite", marginBottom: 12 }} />
+      <div style={{ fontSize: 13 }}>{message}</div>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }) {
+  return (
+    <div style={{
+      background: "#EF444415", border: "1px solid #EF444430",
+      borderRadius: 10, padding: "20px 24px",
+      display: "flex", alignItems: "flex-start", gap: 12,
+    }}>
+      <AlertCircle size={20} color="#EF4444" style={{ flexShrink: 0, marginTop: 1 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ color: "#EF4444", fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+          HubSpot Verbindungsfehler
+        </div>
+        <div style={{ color: "#94A3B8", fontSize: 13, marginBottom: 10, fontFamily: "monospace" }}>
+          {message}
+        </div>
+        <div style={{ color: "#64748B", fontSize: 12, marginBottom: 12 }}>
+          Mögliche Ursachen: Token fehlt / abgelaufen · CORS-Proxy nicht aktiv · Netzwerkfehler
+        </div>
+        {onRetry && (
+          <button onClick={onRetry} style={{
+            padding: "6px 14px", borderRadius: 6, border: "1px solid #334155",
+            background: "#1E293B", color: "#94A3B8", fontSize: 12, cursor: "pointer",
+          }}>
+            Erneut versuchen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoBanner({ children, color = "#6366F1" }) {
+  return (
+    <div style={{
+      background: `${color}10`, border: `1px solid ${color}30`,
+      borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+      display: "flex", alignItems: "flex-start", gap: 10,
+      fontSize: 13, color: "#A5B4FC",
+    }}>
+      <AlertCircle size={15} color={color} style={{ flexShrink: 0, marginTop: 1 }} />
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div style={{
+      fontSize: 13, fontWeight: 600, color: "#94A3B8",
+      marginBottom: 14, marginTop: 28,
+      display: "flex", alignItems: "center", gap: 8,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OVERVIEW PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function OverviewPage({ mockData }) {
+  const { deals, grouped, kpis, loading, error, reload, lastFetch } = useHubSpotDeals();
+  const [selectedPipelines, setSelectedPipelines] = useState([]);
+
+  const allPipelineNames = [...new Set(deals.map(d => d.pipelineName).filter(Boolean))].sort();
+  const activePipelines = selectedPipelines.length > 0 ? selectedPipelines : allPipelineNames;
+
+  const togglePipeline = (name) => {
+    setSelectedPipelines(prev => {
+      if (prev.length === 0) return allPipelineNames.filter(p => p !== name);
+      if (prev.includes(name)) return prev.filter(p => p !== name);
+      return [...prev, name];
+    });
+  };
+
+  const filteredGrouped = grouped.filter((g) =>
+    activePipelines.some(pName => g.deals.some(d => d.pipelineName === pName))
+  );
+
+  // Stalled deals: keine Aktivität in 21+ Tagen
+  const today = new Date();
+  const stalledDeals = deals.filter(d => {
+    if (d.isClosed) return false;
+    const last = d.lastActivity ? new Date(d.lastActivity) : null;
+    if (!last) return true;
+    return (today - last) / (1000 * 60 * 60 * 24) > 21;
+  });
+
+  const healthScore = stalledDeals.length / Math.max(deals.length, 1) < 0.1
+    ? { grade: "A", label: "Sehr gut", color: "#10B981" }
+    : stalledDeals.length / Math.max(deals.length, 1) < 0.2
+    ? { grade: "B", label: "Gut, mit Vorsicht", color: "#F59E0B" }
+    : { grade: "C", label: "Aufmerksamkeit nötig", color: "#EF4444" };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <div>
+          <h2 style={{ color: "#F1F5F9", fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Outreach Übersicht</h2>
+          <p style={{ color: "#64748B", fontSize: 13 }}>
+            Live-Daten aus HubSpot CRM
+            {lastFetch && ` · Zuletzt aktualisiert: ${lastFetch.toLocaleTimeString("de-DE")}`}
+          </p>
+        </div>
+        <button onClick={reload} disabled={loading} style={{
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "8px 16px", borderRadius: 8, border: "1px solid #334155",
+          background: "#1E293B", color: loading ? "#475569" : "#94A3B8",
+          fontSize: 13, cursor: loading ? "default" : "pointer",
+        }}>
+          <RefreshCw size={14} style={loading ? { animation: "spin 1s linear infinite" } : {}} />
+          Aktualisieren
+        </button>
+      </div>
+
+      {error && <div style={{ marginBottom: 24 }}><ErrorState message={error} onRetry={reload} /></div>}
+
+      {/* Outreach KPIs */}
+      <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366F1" }} />
+        <span style={{ color: "#475569", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em" }}>OUTREACH ÜBERSICHT</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+        {[
+          { label: "Nurture Pipeline",    value: mockData.kpis.nurturePipeline,       unit: "Deals",       color: "#6366F1", icon: RefreshCw },
+          { label: "Trigger Signale",     value: mockData.kpis.triggerSignalsThisWeek, unit: "diese Woche", color: "#3B82F6", icon: Zap },
+          { label: "Nachrichten Review",  value: mockData.kpis.pendingMessages,        unit: "ausstehend",  color: "#F59E0B", icon: Bell },
+          { label: "EU Marktabdeckung",   value: mockData.kpis.marketCoverage,         unit: "%",           color: "#10B981", icon: Globe },
+        ].map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div key={kpi.label} style={{
+              background: "#1E293B", borderRadius: 12, padding: "18px 20px",
+              borderLeft: `3px solid ${kpi.color}`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <Icon size={13} color={kpi.color} />
+                <span style={{ color: "#94A3B8", fontSize: 12 }}>{kpi.label}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                <span style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 700 }}>{kpi.value}</span>
+                <span style={{ color: "#64748B", fontSize: 12 }}>{kpi.unit}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* HubSpot Live KPIs */}
+      <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+        <span style={{ color: "#475569", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em" }}>HUBSPOT LIVE · DEALS</span>
+      </div>
+
+      {loading ? <LoadingState message="Lade HubSpot Deals..." /> : (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+            {[
+              { label: "Deals gesamt",    value: kpis.totalDeals,               unit: "Deals",     color: "#6366F1", icon: BarChart2 },
+              { label: "Offene Deals",    value: kpis.openDeals,                unit: "offen",     color: "#3B82F6", icon: TrendingUp },
+              { label: "Gewonnene Deals", value: kpis.wonDeals,                 unit: "gewonnen",  color: "#10B981", icon: CheckCircle },
+              { label: "Stalled Deals",   value: stalledDeals.length,           unit: "⚠ Achtung", color: "#EF4444", icon: AlertTriangle },
+            ].map((kpi) => {
+              const Icon = kpi.icon;
+              return (
+                <div key={kpi.label} style={{
+                  background: "#1E293B", borderRadius: 12, padding: "18px 20px",
+                  borderLeft: `3px solid ${kpi.color}`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Icon size={13} color={kpi.color} />
+                    <span style={{ color: "#94A3B8", fontSize: 12 }}>{kpi.label}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                    <span style={{ color: "#F1F5F9", fontSize: 22, fontWeight: 700 }}>{kpi.value}</span>
+                    {kpi.unit && <span style={{ color: "#64748B", fontSize: 12 }}>{kpi.unit}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pipeline Health Score */}
+          <div style={{
+            background: "#1E293B", borderRadius: 12, padding: "20px 24px",
+            border: "1px solid #243044", marginBottom: 24,
+            display: "flex", alignItems: "center", gap: 24,
+          }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
+              border: `3px solid ${healthScore.color}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 28, fontWeight: 700, color: healthScore.color,
+            }}>
+              {healthScore.grade}
+            </div>
+            <div>
+              <div style={{ color: "#F1F5F9", fontWeight: 600, fontSize: 16, marginBottom: 6 }}>
+                Pipeline Health: {healthScore.label}
+              </div>
+              <div style={{ color: "#64748B", fontSize: 13 }}>
+                Stalled Deals: {stalledDeals.length} ({Math.round(stalledDeals.length / Math.max(deals.length, 1) * 100)}% des Pipelines) ·
+                Avg. Deal-Größe: {formatCurrency(kpis.avgDealSize)} ·
+                Gewonnene Deals: {kpis.wonDeals}
+              </div>
+            </div>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 16 }}>
+              {[
+                { label: "Total Pipeline", value: formatCurrency(kpis.totalRevenue), color: "#6366F1" },
+                { label: "Q1 Closed Won",  value: "€165.000",                        color: "#10B981" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "right" }}>
+                  <div style={{ color: s.color, fontSize: 18, fontWeight: 700 }}>{s.value}</div>
+                  <div style={{ color: "#475569", fontSize: 11 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pipeline Stages */}
+          <div style={{ background: "#1E293B", borderRadius: 12, overflow: "hidden", border: "1px solid #243044" }}>
+            <div style={{
+              padding: "14px 20px", borderBottom: "1px solid #243044",
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8,
+            }}>
+              <span style={{ color: "#94A3B8", fontSize: 13, fontWeight: 600 }}>Pipeline nach Stage</span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button onClick={() => setSelectedPipelines([])} style={{
+                  padding: "4px 12px", borderRadius: 20, border: "1px solid",
+                  borderColor: selectedPipelines.length === 0 ? "#6366F1" : "#334155",
+                  background: selectedPipelines.length === 0 ? "#6366F1" : "transparent",
+                  color: selectedPipelines.length === 0 ? "white" : "#64748B",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                }}>Alle</button>
+                {allPipelineNames.map(name => {
+                  const isActive = activePipelines.includes(name);
+                  return (
+                    <button key={name} onClick={() => togglePipeline(name)} style={{
+                      padding: "4px 12px", borderRadius: 20, border: "1px solid",
+                      borderColor: isActive ? "#6366F1" : "#334155",
+                      background: isActive ? "#6366F120" : "transparent",
+                      color: isActive ? "#A5B4FC" : "#475569",
+                      fontSize: 11, fontWeight: 600, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 5,
+                    }}>
+                      {name}
+                      <span style={{
+                        background: isActive ? "#6366F140" : "#1E293B",
+                        borderRadius: 10, padding: "0px 5px", fontSize: 10,
+                        color: isActive ? "#A5B4FC" : "#475569",
+                      }}>{deals.filter(d => d.pipelineName === name).length}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {filteredGrouped.length === 0 ? (
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "#475569", fontSize: 13 }}>Keine Stages gefunden</div>
+            ) : filteredGrouped.map((group, i) => {
+              const barWidth = group.deals.length > 0
+                ? Math.max(4, (group.deals.length / deals.length) * 100) : 0;
+              return (
+                <div key={group.stageId} style={{
+                  padding: "12px 20px",
+                  borderBottom: i < filteredGrouped.length - 1 ? "1px solid #1A2740" : "none",
+                  display: "grid", gridTemplateColumns: "220px 60px 150px 1fr",
+                  gap: 16, alignItems: "center",
+                }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#243044"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                      background: group.isWon ? "#10B981" : group.isClosed ? "#EF4444" : "#6366F1",
+                    }} />
+                    <span style={{ color: "#F1F5F9", fontSize: 13 }}>{group.stageName}</span>
+                    {group.isClosed && (
+                      <span style={{ fontSize: 10, color: group.isWon ? "#10B981" : "#EF4444" }}>
+                        {group.isWon ? "Won" : "Closed"}
+                      </span>
+                    )}
+                  </div>
+                  <span style={{
+                    color: "#94A3B8", fontSize: 12, background: "#243044",
+                    borderRadius: 4, padding: "2px 8px", textAlign: "center",
+                  }}>{group.deals.length}</span>
+                  <span style={{ color: "#64748B", fontSize: 12 }}>{formatCurrency(group.totalAmount)}</span>
+                  <div style={{ height: 6, borderRadius: 3, background: "#243044", overflow: "hidden" }}>
+                    <div style={{
+                      width: `${barWidth}%`, height: "100%", borderRadius: 3,
+                      background: group.isWon ? "#10B981" : group.isClosed ? "#EF4444" : "linear-gradient(90deg, #6366F1, #3B82F6)",
+                      transition: "width 0.4s ease",
+                    }} />
+                  </div>
+                </div>
+              );
+            })}
+
+            <div style={{
+              padding: "12px 20px", borderTop: "1px solid #243044",
+              display: "grid", gridTemplateColumns: "220px 60px 150px 1fr",
+              gap: 16, background: "#0F172A",
+            }}>
+              <span style={{ color: "#64748B", fontSize: 12, fontWeight: 600 }}>Gesamt</span>
+              <span style={{ color: "#F1F5F9", fontSize: 12, fontWeight: 700, background: "#243044", borderRadius: 4, padding: "2px 8px", textAlign: "center" }}>
+                {deals.length}
+              </span>
+              <span style={{ color: "#F1F5F9", fontSize: 12, fontWeight: 700 }}>{formatCurrency(kpis.totalRevenue)}</span>
+              <span />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NURTURE AUTOMATION PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function getDaysSilent(lastContact) {
+  if (!lastContact) return 9999;
+  return Math.floor((new Date() - new Date(lastContact)) / (1000 * 60 * 60 * 24));
+}
+
+function getUrgency(deal) {
+  const days = getDaysSilent(deal.lastContact);
+  if (!deal.lastContact) return "never";
+  if (days > 180) return "critical";
+  if (days > 90)  return "high";
+  if (days > 30)  return "medium";
+  return "low";
+}
+
+const URGENCY_CONFIG = {
+  critical: { label: "🔴 Kritisch",  color: "#EF4444", bg: "#EF444420" },
+  high:     { label: "🟠 Hoch",      color: "#F97316", bg: "#F9731620" },
+  medium:   { label: "🟡 Mittel",    color: "#EAB308", bg: "#EAB30820" },
+  low:      { label: "🟢 Aktuell",   color: "#22C55E", bg: "#22C55E20" },
+  never:    { label: "⚫ Nie",        color: "#94A3B8", bg: "#94A3B820" },
+};
+
+function NurtureAutomationPage() {
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [urgencyFilter, setUrgencyFilter] = useState("all");
+
+  const enriched = NURTURE_DEALS.map(d => ({
+    ...d,
+    daysSilent: getDaysSilent(d.lastContact),
+    urgency: getUrgency(d),
+    ownerName: OWNERS[d.owner] || d.owner,
+  }));
+
+  const filtered = enriched.filter(d => {
+    if (ownerFilter !== "all" && d.owner !== ownerFilter) return false;
+    if (urgencyFilter !== "all" && d.urgency !== urgencyFilter) return false;
+    return true;
+  });
+
+  const counts = {
+    critical: enriched.filter(d => d.urgency === "critical").length,
+    high:     enriched.filter(d => d.urgency === "high").length,
+    medium:   enriched.filter(d => d.urgency === "medium").length,
+    low:      enriched.filter(d => d.urgency === "low").length,
+    never:    enriched.filter(d => d.urgency === "never").length,
+  };
+
+  const uniqueOwners = [...new Set(NURTURE_DEALS.map(d => d.owner))];
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ color: "#F1F5F9", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Nurture Automation</h2>
+          <p style={{ color: "#64748B", fontSize: 13 }}>Follow-up Empfehlungen · Kein Auto-Send · Manuelle Freigabe erforderlich</p>
+        </div>
+      </div>
+
+      <InfoBanner>
+        Alle Vorschläge sind <strong>nur Entwürfe</strong>. Nichts wird automatisch gesendet. Jeder Follow-up muss von der verantwortlichen Person geprüft und freigegeben werden.
+      </InfoBanner>
+
+      {/* Summary Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
+        {[
+          { label: "Gesamt Nurture",     value: enriched.length,   color: "#6366F1", sub: "Alle Deals" },
+          { label: "Überfällig (>90d)",  value: counts.critical + counts.high, color: "#EF4444", sub: "Dringend" },
+          { label: "Bald fällig (30–90d)", value: counts.medium,   color: "#F59E0B", sub: "Empfohlen" },
+          { label: "Aktuell (<30d)",     value: counts.low,         color: "#10B981", sub: "Letzte 30 Tage" },
+          { label: "Nie kontaktiert",    value: counts.never,       color: "#94A3B8", sub: "Keine Aktivität" },
+        ].map(s => (
+          <div key={s.label} style={{
+            background: "#1E293B", borderRadius: 12, padding: "16px 18px",
+            borderTop: `2px solid ${s.color}`,
+          }}>
+            <div style={{ color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>{s.label}</div>
+            <div style={{ color: s.color, fontSize: 26, fontWeight: 700 }}>{s.value}</div>
+            <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <Filter size={14} color="#475569" />
+        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={{
+          padding: "6px 12px", borderRadius: 8, border: "1px solid #334155",
+          background: "#1E293B", color: "#94A3B8", fontSize: 12, cursor: "pointer",
+        }}>
+          <option value="all">Alle Owners</option>
+          {uniqueOwners.map(o => (
+            <option key={o} value={o}>{OWNERS[o] || o}</option>
+          ))}
+        </select>
+        <div style={{ width: 1, height: 20, background: "#334155" }} />
+        {["all", "critical", "high", "medium", "low", "never"].map(u => (
+          <button key={u} onClick={() => setUrgencyFilter(u)} style={{
+            padding: "5px 12px", borderRadius: 6, border: "1px solid",
+            borderColor: urgencyFilter === u ? "#6366F1" : "#334155",
+            background: urgencyFilter === u ? "#6366F120" : "#1E293B",
+            color: urgencyFilter === u ? "#A5B4FC" : "#64748B",
+            fontSize: 12, cursor: "pointer",
+          }}>
+            {u === "all" ? "Alle" : URGENCY_CONFIG[u]?.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{ background: "#1E293B", borderRadius: 12, overflow: "hidden", border: "1px solid #243044" }}>
+        <div style={{
+          padding: "12px 20px", borderBottom: "1px solid #243044",
+          display: "grid", gridTemplateColumns: "1fr 110px 120px 80px 80px 80px 140px",
+          gap: 12,
+        }}>
+          {["Unternehmen", "Owner", "Deal-Wert", "Priorität", "Tage still", "Purple Sheet", "Empfohlene Aktion"].map(h => (
+            <span key={h} style={{ color: "#475569", fontSize: 11, fontWeight: 600, letterSpacing: "0.04em" }}>{h}</span>
+          ))}
+        </div>
+        {filtered.length === 0 ? (
+          <div style={{ padding: "32px 20px", textAlign: "center", color: "#475569", fontSize: 13 }}>Keine Deals gefunden</div>
+        ) : filtered.map((deal, i) => {
+          const urgCfg = URGENCY_CONFIG[deal.urgency];
+          const suggestedAction = deal.urgency === "never"
+            ? "Erstkontakt aufnehmen"
+            : deal.urgency === "critical" || deal.urgency === "high"
+            ? "Dringend re-engagen"
+            : "Follow-up planen";
+          return (
+            <div key={deal.id} style={{
+              padding: "12px 20px",
+              borderBottom: i < filtered.length - 1 ? "1px solid #1A2740" : "none",
+              display: "grid", gridTemplateColumns: "1fr 110px 120px 80px 80px 80px 140px",
+              gap: 12, alignItems: "center",
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#243044"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+            >
+              <div>
+                <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{deal.name}</div>
+                <div style={{ color: "#475569", fontSize: 11, marginTop: 2 }}>
+                  Letzter Kontakt: {deal.lastContact ? formatDate(deal.lastContact) : "–"}
+                </div>
+              </div>
+              <span style={{ color: "#94A3B8", fontSize: 12 }}>{deal.ownerName}</span>
+              <span style={{ color: "#64748B", fontSize: 12 }}>{deal.amount > 0 ? formatCurrency(deal.amount) : "–"}</span>
+              <span style={{
+                background: urgCfg.bg, color: urgCfg.color,
+                fontSize: 11, padding: "3px 8px", borderRadius: 6, fontWeight: 600,
+                whiteSpace: "nowrap",
+              }}>{urgCfg.label}</span>
+              <span style={{
+                color: deal.daysSilent > 180 ? "#EF4444" : deal.daysSilent > 90 ? "#F97316" : deal.daysSilent > 30 ? "#EAB308" : "#10B981",
+                fontSize: 13, fontWeight: 600,
+              }}>
+                {deal.daysSilent === 9999 ? "∞" : deal.daysSilent}d
+              </span>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: "50%",
+                  background: deal.purpleSheet ? "#A855F7" : "#334155",
+                }} />
+              </div>
+              <button style={{
+                padding: "5px 10px", borderRadius: 6, border: "1px solid #6366F1",
+                background: "transparent", color: "#A5B4FC",
+                fontSize: 11, cursor: "pointer", textAlign: "left",
+              }}>
+                {suggestedAction}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRIGGER OUTREACH PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function TriggerOutreachPage({ data }) {
+  const [signals, setSignals] = useState(data.triggerSignals);
+  const [activeSignal, setActiveSignal] = useState(null);
+  const [generatingId, setGeneratingId] = useState(null);
+  const [filterType, setFilterType] = useState("all");
+  const [filterRelevance, setFilterRelevance] = useState("all");
+  const [activeTab, setActiveTab] = useState("signals");
+
+  const generateMessage = (signalId) => {
+    setGeneratingId(signalId);
+    setTimeout(() => {
+      setSignals((prev) => prev.map((s) => {
+        if (s.id !== signalId) return s;
+        return {
+          ...s, drafted: true,
+          draftMessage: `Hallo ${s.contact.split(" ")[0]},\n\nich habe Ihren Beitrag zu "${s.signal.substring(0, 55)}..." gesehen – sehr spannend!\n\nGenau in diesem Bereich können wir bei ${s.company} einen echten Mehrwert schaffen. Unsere Plattform hilft dabei, die Integration effizienter und skalierbarer zu gestalten.\n\nWäre ein kurzes 15-minütiges Gespräch diese Woche möglich?\n\nBeste Grüße`,
+        };
+      }));
+      setGeneratingId(null);
+      setActiveSignal(signalId);
+    }, 1800);
+  };
+
+  const filteredSignals = signals.filter((s) => {
+    if (filterType !== "all" && s.type !== filterType) return false;
+    if (filterRelevance !== "all" && s.relevance !== filterRelevance) return false;
+    return true;
+  });
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ color: "#F1F5F9", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Trigger-based Outreach</h2>
+          <p style={{ color: "#64748B", fontSize: 13 }}>KI-erkannte Signale diese Woche · Zuletzt aktualisiert: heute 08:00</p>
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          {[
+            { label: "Signale",         value: signals.length,                                    color: "#3B82F6" },
+            { label: "High Priority",   value: signals.filter(s => s.relevance === "high").length, color: "#10B981" },
+            { label: "Entwürfe fertig", value: signals.filter(s => s.drafted).length,              color: "#6366F1" },
+          ].map((stat) => (
+            <div key={stat.label} style={{
+              background: "#1E293B", borderRadius: 10, padding: "10px 16px",
+              textAlign: "center", borderTop: `2px solid ${stat.color}`,
+            }}>
+              <div style={{ color: stat.color, fontSize: 20, fontWeight: 700 }}>{stat.value}</div>
+              <div style={{ color: "#64748B", fontSize: 11 }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "#1E293B", padding: 4, borderRadius: 10, width: "fit-content" }}>
+        {[{ id: "signals", label: "Signal Feed", icon: Zap }, { id: "top10", label: "Top 10 Targets", icon: Trophy }].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer",
+              background: isActive ? "#0F172A" : "transparent",
+              color: isActive ? "#F1F5F9" : "#64748B",
+              fontSize: 13, fontWeight: isActive ? 600 : 400,
+            }}>
+              <Icon size={14} />{tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "signals" && (
+        <div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            {[
+              { value: "all", label: "Alle Typen" },
+              { value: "linkedin_post", label: "LinkedIn" },
+              { value: "news", label: "News" },
+              { value: "website_change", label: "Website" },
+            ].map((f) => (
+              <button key={f.value} onClick={() => setFilterType(f.value)} style={{
+                padding: "5px 12px", borderRadius: 6, border: "1px solid",
+                borderColor: filterType === f.value ? "#6366F1" : "#1E293B",
+                background: filterType === f.value ? "#6366F120" : "#1E293B",
+                color: filterType === f.value ? "#A5B4FC" : "#64748B",
+                fontSize: 12, cursor: "pointer",
+              }}>{f.label}</button>
+            ))}
+            <div style={{ width: 1, background: "#334155" }} />
+            {["all", "high", "medium"].map((r) => (
+              <button key={r} onClick={() => setFilterRelevance(r)} style={{
+                padding: "5px 12px", borderRadius: 6, border: "1px solid",
+                borderColor: filterRelevance === r ? "#6366F1" : "#1E293B",
+                background: filterRelevance === r ? "#6366F120" : "#1E293B",
+                color: filterRelevance === r ? "#A5B4FC" : "#64748B",
+                fontSize: 12, cursor: "pointer",
+              }}>{r === "all" ? "Alle" : r === "high" ? "↑ Hoch" : "↗ Mittel"}</button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filteredSignals.map((signal) => {
+              const typeConfig = SIGNAL_TYPES[signal.type];
+              const relevanceConfig = RELEVANCE_CONFIG[signal.relevance];
+              const TypeIcon = typeConfig.icon;
+              const isExpanded = activeSignal === signal.id;
+              const isGenerating = generatingId === signal.id;
+              return (
+                <div key={signal.id} style={{
+                  background: "#1E293B", borderRadius: 12,
+                  border: `1px solid ${isExpanded ? "#6366F1" : "#243044"}`,
+                  overflow: "hidden", transition: "border-color 0.2s",
+                }}>
+                  <div style={{ padding: "16px 20px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                        background: typeConfig.bg, display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <TypeIcon size={16} color={typeConfig.color} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <span style={{ color: "#F1F5F9", fontWeight: 600, fontSize: 14 }}>{signal.company}</span>
+                          <span style={{ color: "#64748B", fontSize: 12 }}>·</span>
+                          <span style={{ color: "#94A3B8", fontSize: 12 }}>{signal.contact}</span>
+                          <span style={{ color: "#64748B", fontSize: 12 }}>·</span>
+                          <span style={{ color: "#64748B", fontSize: 12 }}>{signal.contactTitle}</span>
+                        </div>
+                        <p style={{ color: "#94A3B8", fontSize: 13, lineHeight: 1.5, margin: "0 0 10px" }}>{signal.signal}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ background: typeConfig.bg, color: typeConfig.color, fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                            {typeConfig.label}
+                          </span>
+                          <span style={{ background: relevanceConfig.bg, color: relevanceConfig.color, fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                            {relevanceConfig.label}
+                          </span>
+                          <span style={{ color: "#475569", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+                            <Clock size={10} /> {signal.detectedAt}
+                          </span>
+                          <span style={{ color: "#64748B", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
+                            <ArrowRight size={10} /> {signal.suggestedAction}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        {signal.drafted ? (
+                          <button onClick={() => setActiveSignal(isExpanded ? null : signal.id)} style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", borderRadius: 7, border: "1px solid #10B981",
+                            background: "#10B98115", color: "#10B981",
+                            fontSize: 12, fontWeight: 600, cursor: "pointer",
+                          }}>
+                            <Eye size={13} /> Entwurf ansehen
+                          </button>
+                        ) : (
+                          <button onClick={() => generateMessage(signal.id)} disabled={isGenerating} style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", borderRadius: 7, border: "none",
+                            background: isGenerating ? "#1E293B" : "linear-gradient(135deg, #6366F1, #3B82F6)",
+                            color: isGenerating ? "#64748B" : "white",
+                            fontSize: 12, fontWeight: 600, cursor: isGenerating ? "default" : "pointer",
+                          }}>
+                            {isGenerating
+                              ? <><RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} /> Generiere...</>
+                              : <><Sparkles size={13} /> Nachricht generieren</>}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {isExpanded && signal.drafted && (
+                    <div style={{ borderTop: "1px solid #243044", padding: "16px 20px", background: "#0F1A2E" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                        <CheckCircle size={14} color="#10B981" />
+                        <span style={{ color: "#10B981", fontSize: 12, fontWeight: 600 }}>KI-Nachrichtenentwurf</span>
+                        <span style={{ color: "#475569", fontSize: 11 }}>· Bereit zur Überprüfung</span>
+                      </div>
+                      <textarea defaultValue={signal.draftMessage} rows={8} style={{
+                        width: "100%", background: "#1E293B", border: "1px solid #334155",
+                        borderRadius: 8, color: "#F1F5F9", fontSize: 13, padding: 14,
+                        lineHeight: 1.6, resize: "vertical", fontFamily: "inherit",
+                        outline: "none", boxSizing: "border-box",
+                      }} />
+                      <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "flex-end" }}>
+                        <button style={{
+                          padding: "7px 16px", borderRadius: 7, border: "1px solid #334155",
+                          background: "transparent", color: "#94A3B8", fontSize: 12, cursor: "pointer",
+                        }}>Verwerfen</button>
+                        <button style={{
+                          padding: "7px 16px", borderRadius: 7, border: "none",
+                          background: "linear-gradient(135deg, #6366F1, #3B82F6)",
+                          color: "white", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                          <Send size={12} /> Zur Überprüfung freigeben
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "top10" && (
+        <div style={{ background: "#1E293B", borderRadius: 12, overflow: "hidden", border: "1px solid #243044" }}>
+          <div style={{
+            padding: "14px 20px", borderBottom: "1px solid #243044",
+            background: "linear-gradient(135deg, #6366F108, #A855F708)",
+          }}>
+            <div style={{ color: "#F1F5F9", fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+              <Trophy size={16} color="#F59E0B" /> Top 10 Outreach Targets dieser Woche
+            </div>
+          </div>
+          <div style={{
+            padding: "10px 20px", borderBottom: "1px solid #243044",
+            display: "grid", gridTemplateColumns: "40px 1fr 1fr 160px 110px 130px", gap: 12,
+          }}>
+            {["#", "Unternehmen", "Signal", "Kontakt", "Score", "Stage"].map((h) => (
+              <span key={h} style={{ color: "#475569", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em" }}>{h}</span>
+            ))}
+          </div>
+          {data.topTargets.map((target, i) => {
+            const stageConfig = STAGE_COLORS[target.stage] || STAGE_COLORS["Cold"];
+            return (
+              <div key={target.rank} style={{
+                padding: "14px 20px",
+                borderBottom: i < data.topTargets.length - 1 ? "1px solid #1A2740" : "none",
+                display: "grid", gridTemplateColumns: "40px 1fr 1fr 160px 110px 130px",
+                gap: 12, alignItems: "center", cursor: "pointer",
+              }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#243044"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <div style={{
+                  width: 28, height: 28, borderRadius: 6,
+                  background: target.rank <= 3 ? "linear-gradient(135deg, #6366F1, #3B82F6)" : "#243044",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: target.rank <= 3 ? "white" : "#64748B",
+                  fontSize: 12, fontWeight: 700,
+                }}>{target.rank}</div>
+                <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{target.company}</div>
+                <div style={{ color: "#64748B", fontSize: 12 }}>{target.reason}</div>
+                <div style={{ color: "#94A3B8", fontSize: 12 }}>{target.contact}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#243044", overflow: "hidden" }}>
+                    <div style={{
+                      width: `${target.score}%`, height: "100%", borderRadius: 2,
+                      background: target.score >= 80 ? "#10B981" : target.score >= 60 ? "#F59E0B" : "#64748B",
+                    }} />
+                  </div>
+                  <span style={{ color: "#94A3B8", fontSize: 11, width: 24 }}>{target.score}</span>
+                </div>
+                <span style={{
+                  background: stageConfig.bg, color: stageConfig.color,
+                  fontSize: 11, padding: "3px 10px", borderRadius: 4, fontWeight: 600,
+                }}>{target.stage}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EU MARKET COVERAGE PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function EUMarketCoveragePage() {
+  const [countryFilter, setCountryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const countries = useMemo(() => {
+    const map = {};
+    ALL_UTILITIES.forEach(u => {
+      if (!map[u.country]) map[u.country] = { total: 0, inHubspot: 0, contacted: 0, untouched: 0 };
+      map[u.country].total++;
+      if (u.inHubspot) map[u.country].inHubspot++;
+      if (u.contacted) map[u.country].contacted++;
+      if (!u.contacted) map[u.country].untouched++;
+    });
+    return Object.entries(map).sort((a, b) => b[1].total - a[1].total);
+  }, []);
+
+  const totals = useMemo(() => ({
+    total:     ALL_UTILITIES.length,
+    inHubspot: ALL_UTILITIES.filter(u => u.inHubspot).length,
+    contacted: ALL_UTILITIES.filter(u => u.contacted).length,
+    untouched: ALL_UTILITIES.filter(u => !u.contacted).length,
+  }), []);
+
+  const filtered = ALL_UTILITIES.filter(u => {
+    if (countryFilter !== "all" && u.country !== countryFilter) return false;
+    if (statusFilter === "untouched" && u.contacted) return false;
+    if (statusFilter === "contacted" && !u.contacted) return false;
+    if (statusFilter === "no_hubspot" && u.inHubspot) return false;
+    return true;
+  });
+
+  const allCountries = [...new Set(ALL_UTILITIES.map(u => u.country))].sort();
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ color: "#F1F5F9", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>EU Market Coverage</h2>
+          <p style={{ color: "#64748B", fontSize: 13 }}>Europäische B2C Utilities · Top 120 Liste + Research · {ALL_UTILITIES.length} Unternehmen tracked</p>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
+        {[
+          { label: "B2C Utilities tracked",  value: totals.total,     color: "#6366F1", sub: "Alle Länder" },
+          { label: "In HubSpot",             value: totals.inHubspot, color: "#10B981", sub: "Im CRM erfasst" },
+          { label: "Kontaktiert",            value: totals.contacted, color: "#3B82F6", sub: "Mind. 1 Outreach" },
+          { label: "Whitespace",             value: totals.untouched, color: "#EF4444", sub: "Noch nicht kontaktiert" },
+        ].map(s => (
+          <div key={s.label} style={{
+            background: "#1E293B", borderRadius: 12, padding: "18px 20px",
+            borderLeft: `3px solid ${s.color}`,
+          }}>
+            <div style={{ color: "#94A3B8", fontSize: 12, marginBottom: 8 }}>{s.label}</div>
+            <div style={{ color: "#F1F5F9", fontSize: 30, fontWeight: 700 }}>{s.value}</div>
+            <div style={{ color: "#475569", fontSize: 11, marginTop: 4 }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Country Grid */}
+      <SectionTitle><Globe size={14} color="#10B981" /> Coverage nach Land</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 28 }}>
+        {countries.map(([country, stats]) => {
+          const pct = Math.round(stats.contacted / stats.total * 100);
+          return (
+            <div key={country}
+              onClick={() => setCountryFilter(countryFilter === country ? "all" : country)}
+              style={{
+                background: countryFilter === country ? "#243044" : "#1E293B",
+                border: `1px solid ${countryFilter === country ? "#6366F1" : "#243044"}`,
+                borderRadius: 10, padding: "14px 16px", cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => { if (countryFilter !== country) e.currentTarget.style.borderColor = "#6366F150"; }}
+              onMouseLeave={(e) => { if (countryFilter !== country) e.currentTarget.style.borderColor = "#243044"; }}
+            >
+              <div style={{ color: "#F1F5F9", fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{country}</div>
+              <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#64748B", marginBottom: 8 }}>
+                <span><span style={{ color: "#F1F5F9", fontWeight: 600 }}>{stats.contacted}</span>/{stats.total} kontaktiert</span>
+              </div>
+              <div style={{ height: 4, borderRadius: 2, background: "#334155", overflow: "hidden" }}>
+                <div style={{
+                  width: `${pct}%`, height: "100%", borderRadius: 2,
+                  background: pct >= 70 ? "#10B981" : pct >= 40 ? "#F59E0B" : "#6366F1",
+                }} />
+              </div>
+              <div style={{ color: "#475569", fontSize: 11, marginTop: 4 }}>{pct}% Abdeckung</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Utilities Table */}
+      <SectionTitle><AlertTriangle size={14} color="#EF4444" /> Utility Details</SectionTitle>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        <Filter size={14} color="#475569" />
+        <select value={countryFilter} onChange={e => setCountryFilter(e.target.value)} style={{
+          padding: "6px 12px", borderRadius: 8, border: "1px solid #334155",
+          background: "#1E293B", color: "#94A3B8", fontSize: 12, cursor: "pointer",
+        }}>
+          <option value="all">Alle Länder</option>
+          {allCountries.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        {[
+          { value: "all",        label: "Alle" },
+          { value: "untouched",  label: "⚪ Whitespace" },
+          { value: "contacted",  label: "✓ Kontaktiert" },
+          { value: "no_hubspot", label: "Nicht in HubSpot" },
+        ].map(f => (
+          <button key={f.value} onClick={() => setStatusFilter(f.value)} style={{
+            padding: "5px 12px", borderRadius: 6, border: "1px solid",
+            borderColor: statusFilter === f.value ? "#6366F1" : "#334155",
+            background: statusFilter === f.value ? "#6366F120" : "#1E293B",
+            color: statusFilter === f.value ? "#A5B4FC" : "#64748B",
+            fontSize: 12, cursor: "pointer",
+          }}>{f.label}</button>
+        ))}
+        <span style={{ color: "#475569", fontSize: 12, marginLeft: "auto" }}>{filtered.length} Utilities</span>
+      </div>
+
+      <div style={{ background: "#1E293B", borderRadius: 12, overflow: "hidden", border: "1px solid #243044" }}>
+        <div style={{
+          padding: "10px 20px", borderBottom: "1px solid #243044",
+          display: "grid", gridTemplateColumns: "1fr 140px 100px 100px 120px", gap: 12,
+        }}>
+          {["Utility", "Land", "Quelle", "HubSpot", "Status"].map(h => (
+            <span key={h} style={{ color: "#475569", fontSize: 11, fontWeight: 600, letterSpacing: "0.04em" }}>{h}</span>
+          ))}
+        </div>
+        {filtered.length === 0 ? (
+          <div style={{ padding: "32px 20px", textAlign: "center", color: "#475569", fontSize: 13 }}>Keine Utilities gefunden</div>
+        ) : filtered.map((u, i) => (
+          <div key={`${u.name}-${i}`} style={{
+            padding: "10px 20px",
+            borderBottom: i < filtered.length - 1 ? "1px solid #1A2740" : "none",
+            display: "grid", gridTemplateColumns: "1fr 140px 100px 100px 120px",
+            gap: 12, alignItems: "center",
+          }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#243044"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+          >
+            <span style={{ color: "#F1F5F9", fontSize: 13 }}>{u.name}</span>
+            <span style={{ color: "#64748B", fontSize: 12 }}>{u.country}</span>
+            <span style={{
+              fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 600,
+              background: u.source === "Top 120" ? "#6366F120" : "#334155",
+              color: u.source === "Top 120" ? "#A5B4FC" : "#94A3B8",
+            }}>{u.source}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: u.inHubspot ? "#10B981" : "#475569",
+              }} />
+              <span style={{ color: u.inHubspot ? "#10B981" : "#475569", fontSize: 12 }}>
+                {u.inHubspot ? "Ja" : "Nein"}
+              </span>
+            </div>
+            <span style={{
+              fontSize: 11, padding: "3px 10px", borderRadius: 4, fontWeight: 600,
+              background: u.contacted ? "#10B98120" : "#EF444415",
+              color: u.contacted ? "#10B981" : "#EF4444",
+            }}>{u.contacted ? "Kontaktiert" : "Whitespace"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLACEHOLDER PAGE
+// ═══════════════════════════════════════════════════════════════
+
+function PlaceholderPage({ title, description, icon: Icon, color }) {
+  return (
+    <div style={{ textAlign: "center", paddingTop: 80 }}>
+      <div style={{
+        width: 64, height: 64, borderRadius: 16, background: `${color}20`,
+        display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px",
+      }}>
+        <Icon size={28} color={color} />
+      </div>
+      <h2 style={{ color: "#F1F5F9", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{title}</h2>
+      <p style={{ color: "#64748B", maxWidth: 400, margin: "0 auto" }}>{description}</p>
+      <div style={{
+        marginTop: 32, padding: "12px 24px", background: "#1E293B", borderRadius: 8,
+        display: "inline-block", color: "#475569", fontSize: 13, border: "1px dashed #334155",
+      }}>
+        → Wird in einer der nächsten Iterationen gebaut
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAV CONFIG
+// ═══════════════════════════════════════════════════════════════
+
+const NAV_ITEMS = [
+  { id: "overview",  label: "Übersicht",          icon: LayoutDashboard, badge: null },
+  { id: "nurture",   label: "Nurture Automation",  icon: RefreshCw,       badge: 8 },
+  { id: "triggers",  label: "Trigger Outreach",    icon: Zap,             badge: 12 },
+  { id: "targeted",  label: "Targeted Outreach",   icon: Target,          badge: null },
+  { id: "europe",    label: "EU Market Coverage",  icon: Globe,           badge: null },
+  { id: "manual",    label: "Manual Outreach",     icon: Users,           badge: null },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// APP ROOT
+// ═══════════════════════════════════════════════════════════════
+
+export default function App() {
+  const [activePage, setActivePage] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+  const activeNavItem = NAV_ITEMS.find((n) => n.id === activePage);
+
+  const renderPage = () => {
+    switch (activePage) {
+      case "overview":  return <OverviewPage mockData={MOCK_DATA} />;
+      case "nurture":   return <NurtureAutomationPage />;
+      case "triggers":  return <TriggerOutreachPage data={MOCK_DATA} />;
+      case "targeted":  return <PlaceholderPage title="Targeted Outreach"  description="Monatliche Liste von Unternehmen mit Enode / Smartcar Produkten." icon={Target} color="#8B5CF6" />;
+      case "europe":    return <EUMarketCoveragePage />;
+      case "manual":    return <PlaceholderPage title="Manual Outreach"    description="LinkedIn und Email Outreach Tracker." icon={Users} color="#F59E0B" />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{
+      display: "flex", height: "100vh", background: "#0F172A",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", color: "#F1F5F9",
+    }}>
+      {/* SIDEBAR */}
+      <aside style={{
+        width: 256, background: "#0D1526", borderRight: "1px solid #1E293B",
+        display: "flex", flexDirection: "column", flexShrink: 0,
+      }}>
+        <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid #1E293B" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, background: "linear-gradient(135deg, #6366F1, #3B82F6)",
+              borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Zap size={16} color="white" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#F1F5F9" }}>Outreach Hub</div>
+              <div style={{ fontSize: 11, color: "#475569" }}>Automation Dashboard</div>
+            </div>
+          </div>
+        </div>
+
+        <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
+          <div style={{ fontSize: 11, color: "#475569", padding: "8px 10px", fontWeight: 600, letterSpacing: "0.05em" }}>BEREICHE</div>
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePage === item.id;
+            return (
+              <button key={item.id} onClick={() => setActivePage(item.id)} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 10px", borderRadius: 8, border: "none", cursor: "pointer",
+                marginBottom: 2, background: isActive ? "#1E293B" : "transparent",
+                color: isActive ? "#F1F5F9" : "#64748B", textAlign: "left",
+              }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#1E293B50"; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+              >
+                <div style={{ width: 3, height: 18, borderRadius: 2, background: isActive ? "#6366F1" : "transparent", flexShrink: 0 }} />
+                <Icon size={16} />
+                <span style={{ flex: 1, fontSize: 13, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+                {item.badge && (
+                  <span style={{
+                    background: isActive ? "#6366F1" : "#334155",
+                    color: isActive ? "white" : "#94A3B8",
+                    fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 10,
+                  }}>{item.badge}</span>
+                )}
+                {isActive && <ChevronRight size={14} color="#6366F1" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div style={{ padding: "12px 16px", borderTop: "1px solid #1E293B", fontSize: 11, color: "#475569" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+            <span>HubSpot verbunden</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981" }} />
+            <span>Notion verbunden</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <header style={{
+          height: 60, background: "#0D1526", borderBottom: "1px solid #1E293B",
+          display: "flex", alignItems: "center", padding: "0 24px", gap: 16, flexShrink: 0,
+        }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "#475569", fontSize: 13 }}>Outreach Hub</span>
+            <ChevronRight size={14} color="#334155" />
+            <span style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>{activeNavItem?.label}</span>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, background: "#1E293B",
+            border: "1px solid #334155", borderRadius: 8, padding: "6px 12px", width: 240,
+          }}>
+            <Search size={14} color="#475569" />
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Suchen..." style={{
+                background: "none", border: "none", outline: "none",
+                color: "#F1F5F9", fontSize: 13, width: "100%",
+              }} />
+          </div>
+          <button style={{ background: "none", border: "none", cursor: "pointer", padding: 6, position: "relative" }}>
+            <Bell size={18} color="#64748B" />
+            <div style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#EF4444", border: "2px solid #0D1526" }} />
+          </button>
+          <button style={{ background: "none", border: "none", cursor: "pointer", padding: 6 }}>
+            <Settings size={18} color="#64748B" />
+          </button>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: "linear-gradient(135deg, #6366F1, #3B82F6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, fontWeight: 700, color: "white",
+          }}>S</div>
+        </header>
+
+        <main style={{ flex: 1, overflowY: "auto", padding: 28 }}>{renderPage()}</main>
+      </div>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        select option { background: #1E293B; }
+      `}</style>
+    </div>
+  );
+}
